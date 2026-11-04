@@ -9,8 +9,14 @@ Status cakupan saat ini:
 | S1-01 | Login, hash argon2, sesi JWT | Ya |
 | S1-02 | Guard akses per peran | Ya |
 | S1-03 | Layout dan navigasi per peran | Ya |
-| S1-09 | Audit log login/logout | Ya (sebagian, data master menyusul) |
-| S1-04 sampai S1-08, S1-10, S1-11 | CRUD data master, validasi, nonaktifkan akun, impor CSV | Belum, bagian 6 diisi saat fiturnya selesai |
+| S1-04 | CRUD siswa dan relasi ke orang tua (termasuk CRUD orang tua) | Ya |
+| S1-05 | CRUD guru | Ya |
+| S1-06 | CRUD jadwal pelajaran | Ya |
+| S1-07 | CRUD lokasi sekolah | Ya |
+| S1-08 | Validasi Zod dan pesan gagal | Ya (diuji di setiap form) |
+| S1-09 | Audit log login, logout, dan perubahan data master | Ya |
+| S1-10 | Nonaktifkan akun | Ya |
+| S1-11 | Impor siswa dari CSV | Ya |
 
 ## 1. Persiapan
 
@@ -97,15 +103,120 @@ Buka `npx prisma studio`, lalu tabel `audit_logs`. Urutkan berdasarkan `id` terb
 
 ## 6. Data Master (S1-04 sampai S1-11)
 
-> Bagian ini dilengkapi oleh PIC masing-masing item saat fiturnya selesai. Gunakan format tabel yang sama: No, Langkah, Hasil yang diharapkan, Lulus.
+Semua uji di bagian ini dilakukan sebagai `admin`. Setiap form juga harus memenuhi aturan umum berikut:
+- Saat gagal, pesan muncul di atas form dan di bawah field yang salah, dan isian yang sudah diketik **tidak hilang** (kecuali password).
+- Saat berhasil, kembali ke halaman daftar dan data baru langsung tampil.
 
-Hal minimal yang perlu diuji untuk setiap CRUD:
-- Tambah data dengan input valid berhasil dan tampil di daftar.
-- Input kosong, format salah, atau duplikat (NIS, NIP, username) ditolak dengan pesan yang jelas (FR-17).
-- Ubah dan nonaktifkan data berhasil; data yang dinonaktifkan tidak bisa login (S1-10).
-- Validasi tetap berjalan walaupun validasi di browser dilewati (misalnya atribut `required` dihapus lewat DevTools).
-- Setiap perubahan tercatat di `audit_logs`.
-- Hanya Admin yang bisa melakukan perubahan.
+### 6.1 Siswa (S1-04)
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| D-01 | Menu **Siswa** → **Tambah siswa**, isi NIS `abc`, nama `A`, password `123`, simpan | Ditolak: "NIS hanya berisi angka", "Nama minimal 3 karakter", "Password minimal 8 karakter" | [ ] |
+| D-02 | Tambah siswa dengan NIS `2024001` | Ditolak: "NIS sudah terdaftar." | [ ] |
+| D-03 | Tambah siswa NIS `2024099`, nama `Siswa Uji`, kelas `xi  rpl 1` (huruf kecil, spasi ganda), orang tua `Ahmad Wijaya`, password `rahasia123` | Berhasil; di daftar kelas tampil `XI RPL 1` dan orang tua `Ahmad Wijaya` | [ ] |
+| D-04 | Logout, login sebagai `2024099` / `rahasia123` | Berhasil masuk ke `/siswa` | [ ] |
+| D-05 | Ubah siswa `2024099`: NIS menjadi `2024098`, orang tua "Belum dihubungkan", password dikosongkan | Berhasil; login sekarang memakai `2024098` dengan password lama | [ ] |
+| D-06 | Ubah siswa `2024098`, isi password baru `passwordbaru1` | Login dengan password lama gagal, dengan password baru berhasil | [ ] |
+| D-07 | Ubah NIS siswa `2024098` menjadi `2024001` | Ditolak: "NIS sudah terdaftar." | [ ] |
+| D-08 | Pencarian: ketik `rizky`, lalu filter kelas `XI RPL 2` | Daftar tersaring sesuai pencarian/filter | [ ] |
+
+### 6.2 Orang Tua (bagian dari S1-04)
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| O-01 | Menu **Orang Tua** → tambah `Ortu Uji`, username `ortu.uji`, password `password123` | Berhasil, tampil "Belum terhubung" di kolom Anak | [ ] |
+| O-02 | Tambah orang tua dengan username `ortu1` | Ditolak: "Username sudah dipakai." | [ ] |
+| O-03 | Ubah siswa mana pun, pilih orang tua `Ortu Uji` | Di daftar orang tua, nama anak tampil pada `Ortu Uji` | [ ] |
+
+### 6.3 Guru (S1-05)
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| U-01 | Tambah guru dengan NIP `123` | Ditolak: "NIP hanya berisi angka, 8-30 digit." | [ ] |
+| U-02 | Tambah guru dengan NIP `198501012010011001` (milik guru1) | Ditolak: "NIP sudah terdaftar." | [ ] |
+| U-03 | Tambah guru dengan username `guru1` | Ditolak: "Username sudah dipakai." | [ ] |
+| U-04 | Tambah guru NIP `200001012020121001`, username `Guru.Uji` | Berhasil; username tersimpan sebagai `guru.uji` (huruf kecil) dan bisa login ke `/guru` | [ ] |
+| U-05 | Di halaman ubah guru, klik **Lihat jadwal** | Membuka daftar jadwal yang sudah terfilter untuk guru tersebut | [ ] |
+
+### 6.4 Jadwal Pelajaran (S1-06)
+
+Data seed: `guru1` (Budi Santoso) mengajar XI RPL 1 hari Senin 07:00-08:30.
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| J-01 | Tambah jadwal dengan jam mulai `09:00`, jam selesai `08:00` | Ditolak: "Jam selesai harus setelah jam mulai." | [ ] |
+| J-02 | Tambah jadwal guru1, kelas XI RPL 2, Senin 08:00-09:00 | Ditolak: "Bentrok dengan jadwal Budi Santoso ..." | [ ] |
+| J-03 | Tambah jadwal guru2, kelas XI RPL 1, Senin 08:00-09:00 | Ditolak: "Kelas XI RPL 1 sudah ada pelajaran ..." | [ ] |
+| J-04 | Tambah jadwal guru1, kelas XI RPL 2, Senin 08:30-10:00 | Berhasil (bersambung tepat setelah jadwal lain tidak dianggap bentrok) | [ ] |
+| J-05 | Ubah jadwal J-04, ganti mata pelajaran saja | Berhasil (tidak bentrok dengan dirinya sendiri) | [ ] |
+| J-06 | Hapus jadwal J-04 | Muncul konfirmasi, lalu jadwal hilang dari daftar | [ ] |
+| J-07 | Nonaktifkan akun guru2, lalu buka form tambah jadwal | guru2 tidak ada di pilihan guru | [ ] |
+
+### 6.5 Lokasi Sekolah (S1-07)
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| K-01 | Tambah lokasi dengan latitude `100`, longitude `abc`, radius `5` | Ditolak dengan pesan di ketiga field | [ ] |
+| K-02 | Tambah lokasi `Gedung Baru`, latitude `-6,2` (pakai koma), longitude `106.8`, radius `150`, centang aktif | Berhasil; lokasi lama otomatis menjadi "Tidak dipakai" | [ ] |
+| K-03 | Klik koordinat di daftar | Google Maps terbuka di tab baru pada titik tersebut | [ ] |
+| K-04 | Buka halaman ubah lokasi yang aktif | Tidak ada tombol hapus | [ ] |
+| K-05 | Buka lokasi yang tidak aktif, klik **Hapus lokasi** | Muncul konfirmasi, lalu lokasi terhapus | [ ] |
+| K-06 | Ubah lokasi aktif, hilangkan centang aktif | Muncul peringatan merah "Belum ada lokasi aktif" di halaman daftar | [ ] |
+
+### 6.6 Nonaktifkan Akun (S1-10)
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| X-01 | Buka ubah siswa, klik **Nonaktifkan akun** | Muncul konfirmasi "Nonaktifkan akun ini?" dengan tombol Batal | [ ] |
+| X-02 | Klik **Ya, lanjutkan** | Status menjadi Nonaktif, siswa tidak bisa login, data siswa tetap ada di daftar | [ ] |
+| X-03 | Klik **Aktifkan kembali** | Status Aktif, siswa bisa login lagi | [ ] |
+| X-04 | Ulangi untuk guru dan orang tua | Perilaku sama | [ ] |
+| X-05 | Dashboard admin setelah menonaktifkan satu siswa | Angka "Siswa aktif" berkurang satu | [ ] |
+
+### 6.7 Impor Siswa dari CSV (S1-11)
+
+Buat file teks berikut dan simpan sebagai `.csv`.
+
+`salah.csv` (pemisah titik koma, seperti hasil Excel bahasa Indonesia):
+```
+nis;nama;kelas
+2024201;Andi Saputra;X RPL 1
+xx;B;X RPL 1
+2024201;Dobel;X RPL 1
+2024001;Siswa Lama;X RPL 1
+```
+
+`benar.csv`:
+```
+nis,nama,kelas
+2024201,"Saputra, Andi",X RPL 1
+2024202,Bunga Citra,X RPL 1
+```
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| I-01 | Menu Siswa → **Impor CSV**, unggah `salah.csv`, password `password123` | Ditolak dengan daftar kesalahan per baris (baris 3, 4, 5); jumlah siswa tidak bertambah sama sekali | [ ] |
+| I-02 | Unggah `benar.csv` | Berhasil; dua siswa baru tampil, nama `Saputra, Andi` utuh dengan koma | [ ] |
+| I-03 | Login sebagai `2024202` / `password123` | Berhasil | [ ] |
+| I-04 | Unggah file yang baris pertamanya bukan `nis,nama,kelas` | Ditolak: "Baris pertama harus berisi judul kolom: nis, nama, kelas." | [ ] |
+
+### 6.8 Validasi di Server dan Hak Akses (S1-08)
+
+| No | Langkah | Hasil yang diharapkan | Lulus |
+|---|---|---|---|
+| V-01 | Di form tambah siswa, buka DevTools → Elements, hapus atribut `required`/`inputMode`, kirim form kosong | Tetap ditolak oleh server dengan pesan yang sama | [ ] |
+| V-02 | Login sebagai siswa atau guru, buka `/admin/siswa/baru` | Diarahkan kembali ke halaman perannya sendiri | [ ] |
+
+### 6.9 Audit Log Data Master (S1-09)
+
+Setelah menjalankan uji di atas, buka tabel `audit_logs` di `npx prisma studio`.
+
+| No | Hasil yang diharapkan | Lulus |
+|---|---|---|
+| G-06 | Ada baris `STUDENT_CREATE`, `STUDENT_UPDATE`, `STUDENT_IMPORT`, `TEACHER_CREATE`, `PARENT_CREATE`, `SCHEDULE_CREATE`, `SCHEDULE_UPDATE`, `SCHEDULE_DELETE`, `LOCATION_CREATE`, `LOCATION_UPDATE` | [ ] |
+| G-07 | Ada baris `STUDENT_DEACTIVATE` dan `STUDENT_ACTIVATE` dari uji X-01 sampai X-03 | [ ] |
+| G-08 | Baris `*_UPDATE` berisi `before` dan `after` di kolom `detail` | [ ] |
+| G-09 | Tidak ada password atau hash di kolom `detail` (hanya `passwordReset: true/false`) | [ ] |
 
 ## 7. Pemeriksaan Teknis Sebelum Merge
 

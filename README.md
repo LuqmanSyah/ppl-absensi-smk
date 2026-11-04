@@ -24,8 +24,8 @@ Mesin fingerprint di sekolah sering gagal membaca sidik jari dan pemantauan keha
 
 Status pengerjaan mengikuti rencana sprint di bawah. Centang diperbarui seiring pengembangan.
 
-- [ ] Login akun individual dengan pembatasan hak akses per peran
-- [ ] Kelola data master (siswa, akun, jadwal, lokasi sekolah)
+- [x] Login akun individual dengan pembatasan hak akses per peran
+- [x] Kelola data master (siswa, akun, jadwal, lokasi sekolah)
 - [ ] Guru membuka sesi absensi dan menampilkan QR Code
 - [ ] Siswa check-in/check-out dengan scan QR dan GPS
 - [ ] Validasi jadwal, waktu server, lokasi (radius dan akurasi GPS), serta duplikasi
