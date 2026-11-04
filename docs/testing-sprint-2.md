@@ -85,8 +85,8 @@ Kamera dan GPS hanya bisa dipakai browser lewat **HTTPS** (atau `localhost`). Al
 | H-03 | Pindai QR memakai aplikasi kamera bawaan HP (bukan dari menu Absen) | Link terbuka di browser, langsung mencari lokasi dan mengirim absensi | [ ] |
 | H-04 | iPhone (Safari): ulangi H-01 sampai H-03 | Sama | [ ] |
 | H-05 | Uji di dalam gedung/kelas | Catat akurasi yang muncul jika ditolak. Jika sering di atas 50 m, diskusikan menaikkan `MAX_GPS_ACCURACY_M` | [ ] |
-| H-06 | Matikan data/Wi-Fi saat menekan absen | Pesan "gagal terkirim", berhasil setelah koneksi kembali dan Coba lagi | [ ] |
-| H-07 | Tolak izin lokasi, lalu izinkan dari pengaturan browser | Setelah diizinkan, Coba lagi berhasil | [ ] |
+| H-06 | Matikan data/Wi-Fi saat menekan absen | Pesan "gagal terkirim", berhasil setelah koneksi kembali dan Coba lagi | [x] |
+| H-07 | Tolak izin lokasi, lalu izinkan dari pengaturan browser | Setelah diizinkan, Coba lagi berhasil | [x] |
 
 **Jika muncul masalah:**
 - *Halaman terbuka tapi tombol tidak bereaksi saat memakai `npm run dev`:* pastikan domain tunnel ada di `allowedDevOrigins` pada `next.config.ts` (`*.trycloudflare.com` dan ngrok sudah ditambahkan), atau pakai `npm run start`.
