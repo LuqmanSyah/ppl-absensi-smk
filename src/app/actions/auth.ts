@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { createSession, deleteSession, getSession } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { ROLE_HOME } from "@/lib/roles";
+import { config } from "@/lib/config";
+import { loginLockState } from "@/lib/login-throttle";
 
 const loginSchema = z.object({
   username: z
@@ -29,6 +31,25 @@ const INVALID_LOGIN = "Username atau password salah.";
 // dan penyerang tidak bisa menebak username mana yang terdaftar.
 let dummyHash: Promise<string> | undefined;
 
+/** Waktu login gagal untuk username ini dalam jendela pembatasan, setelah login berhasil terakhir. */
+async function recentFailures(username: string, userId: number | undefined) {
+  const windowStart = new Date(Date.now() - config.loginLockMinutes * 60_000);
+  const lastLogin = userId
+    ? await prisma.auditLog.findFirst({
+        where: { userId, action: "LOGIN" },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      })
+    : null;
+  const since = lastLogin && lastLogin.createdAt > windowStart ? lastLogin.createdAt : windowStart;
+
+  const rows = await prisma.auditLog.findMany({
+    where: { action: "LOGIN_FAILED", createdAt: { gt: since }, detail: { path: ["username"], equals: username } },
+    select: { createdAt: true },
+  });
+  return rows.map((r) => r.createdAt);
+}
+
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = loginSchema.safeParse({
     username: formData.get("username"),
@@ -47,6 +68,21 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     select: { id: true, role: true, isActive: true, passwordHash: true },
   });
 
+  // Cek kunci sebelum memeriksa password, agar penebakan berhenti total selama dikunci.
+  const lock = loginLockState(
+    await recentFailures(username, user?.id),
+    new Date(),
+    config.loginMaxAttempts,
+    config.loginLockMinutes,
+  );
+  if (lock.locked) {
+    await logAudit({ userId: user?.id, action: "LOGIN_BLOCKED", detail: { username } });
+    return {
+      message: `Terlalu banyak percobaan login yang gagal. Coba lagi dalam ${lock.retryAfterMinutes} menit.`,
+      username,
+    };
+  }
+
   dummyHash ??= argon2.hash("dummy-password-for-timing");
   const passwordOk = await argon2.verify(user?.passwordHash ?? (await dummyHash), password);
 
@@ -55,7 +91,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { message: INVALID_LOGIN, username };
   }
   if (!user.isActive) {
-    await logAudit({ userId: user.id, action: "LOGIN_FAILED", detail: { reason: "inactive" } });
+    await logAudit({ userId: user.id, action: "LOGIN_FAILED", detail: { username, reason: "inactive" } });
     return { message: "Akun Anda dinonaktifkan. Hubungi Admin TU.", username };
   }
 

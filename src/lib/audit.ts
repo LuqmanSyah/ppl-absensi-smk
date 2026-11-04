@@ -9,6 +9,7 @@ import { logger } from "@/lib/logger";
 export type AuditAction =
   | "LOGIN"
   | "LOGIN_FAILED"
+  | "LOGIN_BLOCKED"
   | "LOGOUT"
   | (string & {}); // aksi lain, misalnya STUDENT_CREATE
 
