@@ -7,6 +7,7 @@ import {
   ensureLiveSchedule,
   latestSessionToken,
   login,
+  setLessonWindow,
   tooCloseToMidnight,
 } from "./helpers";
 
@@ -77,6 +78,7 @@ test("S-01 siswa di dalam radius berhasil absen (Hadir) dan guru melihatnya tanp
   await page.goto(`/siswa/absen?t=${token}`);
   await expect(status(page)).toContainText("Absen masuk berhasil");
   await expect(status(page)).toContainText("Status: Hadir");
+  await expect(status(page)).toContainText("Jangan lupa absen selesai mulai pukul");
   await expect(page).toHaveURL("/siswa/absen"); // token dihapus dari alamat
 
   // Daftar guru diperbarui otomatis (polling 10 detik).
@@ -85,22 +87,30 @@ test("S-01 siswa di dalam radius berhasil absen (Hadir) dan guru melihatnya tanp
 
   const [event] = await db<{ event_type: string; inside_radius: boolean; distance_m: number }>(
     `SELECT e.event_type, e.inside_radius, e.distance_m FROM attendance_events e
-     JOIN attendance a ON a.id = e.attendance_id JOIN students s ON s.id = a.student_id WHERE s.nis = $1`,
+     JOIN attendance a ON a.id = e.attendance_id JOIN students s ON s.id = a.student_id WHERE s.nis = $1
+     ORDER BY e.recorded_at ASC LIMIT 1`,
     [E2E_STUDENTS[0]],
   );
   expect(event).toMatchObject({ event_type: "CHECK_IN", inside_radius: true });
   expect(event.distance_m).toBeLessThan(5);
 });
 
-test("S-02 scan kedua meminta konfirmasi, lalu absen pulang", async ({ browser }) => {
+test("S-02 absen selesai baru bisa setelah 2/3 pelajaran, lalu berhasil", async ({ browser }) => {
   const page = await studentPage(browser, E2E_STUDENTS[0]);
+  // Jadwal: mulai 10 menit lalu, selesai 60 menit lagi -> absen selesai belum dibuka.
   await page.goto(`/siswa/absen?t=${token}`);
-  await expect(status(page)).toContainText("Anda sudah absen masuk");
-  await page.getByRole("button", { name: "Ya, absen pulang" }).click();
-  await expect(status(page)).toContainText("Absen pulang berhasil");
+  await expect(status(page)).toContainText("Belum waktunya absen selesai");
+  await expect(status(page)).toContainText(/mulai pukul \d{2}:\d{2}/);
+
+  // Geser jadwal: mulai 60 menit lalu, selesai 10 menit lagi -> 2/3 pelajaran sudah lewat.
+  await setLessonWindow(scheduleId, -60, 10);
+  await page.goto(`/siswa/absen?t=${token}`);
+  await expect(status(page)).toContainText("Absen selesai pelajaran");
+  await page.getByRole("button", { name: "Ya, absen selesai" }).click();
+  await expect(status(page)).toContainText("Absen selesai berhasil");
 
   await page.goto(`/siswa/absen?t=${token}`);
-  await expect(status(page)).toContainText("sudah absen pulang");
+  await expect(status(page)).toContainText("sudah absen selesai");
 
   const [row] = await db<{ check_out_at: Date | null }>(
     "SELECT a.check_out_at FROM attendance a JOIN students s ON s.id = a.student_id WHERE s.nis = $1",
@@ -216,6 +226,10 @@ test("G-04 guru menutup sesi, QR tidak bisa dipakai lagi", async ({ page, browse
   await expect(page.getByTestId("session-qr")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Berakhir");
   await expect(page.getByRole("row", { name: /Siswa E2E 2/ })).toContainText("Tidak hadir");
+  // Siswa 3-6 hadir tetapi tidak absen selesai sebelum sesi ditutup.
+  await expect(page.getByTestId("checkout-alert")).toContainText("4 siswa hadir tetapi tidak absen selesai");
+  await expect(page.getByRole("row", { name: /Siswa E2E 3/ })).toContainText("Tidak absen selesai");
+  await expect(page.getByRole("row", { name: /Siswa E2E 1/ })).not.toContainText("Tidak absen selesai");
 
   const student = await studentPage(browser, E2E_STUDENTS[1]);
   await student.goto(`/siswa/absen?t=${token}`);

@@ -69,9 +69,14 @@ export const tooCloseToMidnight = () => {
  * Menyiapkan kelas XII E2E: siswa uji dan jadwal guru1 yang sedang berlangsung
  * (mulai 10 menit lalu, selesai 60 menit lagi). Aman dipanggil berulang kali.
  */
-export async function ensureLiveSchedule() {
+export async function ensureLiveSchedule(
+  className = E2E_CLASS,
+  subject = "Uji Absensi",
+  students: string[] = E2E_STUDENTS,
+  namePrefix = "Siswa E2E",
+) {
   const { weekday, minutes } = jakartaNow();
-  for (const [i, nis] of E2E_STUDENTS.entries()) {
+  for (const [i, nis] of students.entries()) {
     await db(
       `INSERT INTO users (username, password_hash, role)
        SELECT $1::text, password_hash, 'STUDENT' FROM users WHERE username = 'admin'
@@ -82,21 +87,21 @@ export async function ensureLiveSchedule() {
       `INSERT INTO students (user_id, nis, name, class_name)
        SELECT id, $1::text, $2::text, $3::text FROM users WHERE username = $1::text
        ON CONFLICT (nis) DO NOTHING`,
-      [nis, `Siswa E2E ${i + 1}`, E2E_CLASS],
+      [nis, `${namePrefix} ${i + 1}`, className],
     );
   }
   const start = toHhmm(minutes - 10);
   const end = toHhmm(Math.min(minutes + 60, 23 * 60 + 59));
-  const existing = await db<{ id: number }>("SELECT id FROM schedules WHERE class_name = $1 AND subject = 'Uji Absensi'", [E2E_CLASS]);
+  const existing = await db<{ id: number }>("SELECT id FROM schedules WHERE class_name = $1 AND subject = $2", [className, subject]);
   if (existing.length) {
     await db("UPDATE schedules SET day = $1, start_time = $2, end_time = $3 WHERE id = $4", [weekday, start, end, existing[0].id]);
     return existing[0].id;
   }
   const [row] = await db<{ id: number }>(
     `INSERT INTO schedules (teacher_id, class_name, subject, day, start_time, end_time)
-     SELECT t.id, $1, 'Uji Absensi', $2, $3, $4 FROM teachers t JOIN users u ON u.id = t.user_id WHERE u.username = 'guru1'
+     SELECT t.id, $1::text, $5::text, $2::int, $3::time, $4::time FROM teachers t JOIN users u ON u.id = t.user_id WHERE u.username = 'guru1'
      RETURNING id`,
-    [E2E_CLASS, weekday, start, end],
+    [className, weekday, start, end, subject],
   );
   return row.id;
 }
@@ -108,4 +113,19 @@ export async function latestSessionToken(scheduleId: number) {
     [scheduleId],
   );
   return row;
+}
+
+/**
+ * Menggeser jam pelajaran sebuah jadwal relatif terhadap sekarang (dalam menit),
+ * misalnya (-60, 10) = mulai 60 menit lalu, selesai 10 menit lagi.
+ * Dipakai untuk membuka/menutup jendela absen selesai tanpa menunggu.
+ */
+export async function setLessonWindow(scheduleId: number, startOffset: number, endOffset: number) {
+  const { minutes } = jakartaNow();
+  const clamp = (m: number) => Math.max(0, Math.min(23 * 60 + 59, m));
+  await db("UPDATE schedules SET start_time = $1, end_time = $2 WHERE id = $3", [
+    toHhmm(clamp(minutes + startOffset)),
+    toHhmm(clamp(minutes + endOffset)),
+    scheduleId,
+  ]);
 }
