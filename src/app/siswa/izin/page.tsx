@@ -20,11 +20,11 @@ export default async function StudentLeavePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold">Izin / Sakit</h1>
+        <h1 className="text-2xl font-bold">Izin / Sakit</h1>
         <p className="text-sm text-muted-foreground">Pengajuan dikonfirmasi oleh Admin TU.</p>
       </div>
 
-      <ActionForm action={createLeaveRequest} submitLabel="Kirim pengajuan" className="flex flex-col gap-4 rounded-xl border p-4">
+      <ActionForm action={createLeaveRequest} submitLabel="Kirim pengajuan" className="flex flex-col gap-4 surface p-4">
         <SelectField
           name="type"
           label="Jenis"
@@ -42,11 +42,11 @@ export default async function StudentLeavePage() {
       </ActionForm>
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-medium">Pengajuan saya</h2>
+        <h2 className="font-semibold">Pengajuan saya</h2>
         {leaves.length === 0 && <p className="text-sm text-muted-foreground">Belum ada pengajuan.</p>}
         <ul className="flex flex-col gap-2">
           {leaves.map((l) => (
-            <li key={l.id} className="flex flex-col gap-2 rounded-xl border p-4 text-sm" data-testid="leave-item">
+            <li key={l.id} className="flex flex-col gap-2 surface p-4 text-sm" data-testid="leave-item">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">
                   {LEAVE_TYPE_LABEL[l.type]} · {formatLeaveRange(l.dateFrom, l.dateTo)}

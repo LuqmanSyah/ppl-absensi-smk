@@ -52,7 +52,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/admin/
         </select>
         <button type="submit" className={buttonVariants({ variant: "outline" })}>Terapkan</button>
       </form>
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="surface overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

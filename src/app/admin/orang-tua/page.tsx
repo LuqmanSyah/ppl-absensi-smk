@@ -39,7 +39,7 @@ export default async function ParentsPage({ searchParams }: PageProps<"/admin/or
         action={<AddButton href="/admin/orang-tua/baru" label="Tambah orang tua" />}
       />
       <SearchBar q={query} placeholder="Cari nama, username, atau nama anak" />
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="surface overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

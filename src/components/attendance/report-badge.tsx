@@ -10,8 +10,15 @@ export const REPORT_LABEL: Record<ReportStatus, string> = {
   BELUM: "Sedang berlangsung",
 };
 
+const REPORT_VARIANT = {
+  HADIR: "success",
+  TERLAMBAT: "warning",
+  IZIN: "info",
+  SAKIT: "info",
+  ALPA: "destructive",
+  BELUM: "outline",
+} as const satisfies Record<ReportStatus, string>;
+
 export function ReportBadge({ status }: { status: ReportStatus }) {
-  const variant =
-    status === "HADIR" ? "default" : status === "ALPA" || status === "TERLAMBAT" ? "destructive" : status === "BELUM" ? "outline" : "secondary";
-  return <Badge variant={variant}>{REPORT_LABEL[status]}</Badge>;
+  return <Badge variant={REPORT_VARIANT[status]}>{REPORT_LABEL[status]}</Badge>;
 }

@@ -60,7 +60,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/admin/s
         placeholder="Cari nama atau NIS"
         filter={{ name: "kelas", value: classFilter, label: "Kelas", options: classNames }}
       />
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="surface overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

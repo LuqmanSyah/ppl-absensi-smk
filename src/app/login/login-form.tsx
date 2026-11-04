@@ -30,6 +30,7 @@ export function LoginForm() {
           defaultValue={state.username}
           aria-invalid={!!state.fieldErrors?.username}
           aria-describedby="username-error"
+          className="h-11"
           required
         />
         {state.fieldErrors?.username && (
@@ -49,6 +50,7 @@ export function LoginForm() {
           autoComplete="current-password"
           aria-invalid={!!state.fieldErrors?.password}
           aria-describedby="password-error"
+          className="h-11"
           required
         />
         {state.fieldErrors?.password && (
@@ -58,7 +60,7 @@ export function LoginForm() {
         )}
       </div>
 
-      <Button type="submit" size="lg" disabled={pending} className="mt-2">
+      <Button type="submit" size="lg" disabled={pending} className="mt-2 w-full">
         {pending ? "Memproses..." : "Masuk"}
       </Button>
     </form>

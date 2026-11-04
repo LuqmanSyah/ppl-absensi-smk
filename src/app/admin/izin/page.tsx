@@ -52,7 +52,7 @@ export default async function AdminLeavePage({ searchParams }: PageProps<"/admin
           </Link>
         ))}
       </nav>
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="surface overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

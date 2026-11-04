@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { QrCode } from "lucide-react";
 import { ConfirmActionButton } from "@/components/form/confirm-button";
 import { AutoRefresh } from "@/components/attendance/auto-refresh";
+import { LiveBadge } from "@/components/attendance/status-badge";
+import { ProgressBar } from "@/components/attendance/today-overview";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,14 +37,24 @@ export default async function TeacherHomePage() {
   return (
     <div className="flex flex-col gap-6">
       {overview.totals.activeSessions > 0 && <AutoRefresh seconds={10} />}
-      <div>
-        <h1 className="text-xl font-semibold">Halo, {user.name}</h1>
-        <p className="text-sm text-muted-foreground">{formatDate(now.now, config.timezone)}</p>
-      </div>
+      <section className="relative overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground shadow-lg shadow-primary/20">
+        <div className="bg-dots pointer-events-none absolute inset-0" aria-hidden />
+        <div className="pointer-events-none absolute -top-16 -right-12 size-48 rounded-full bg-white/10 blur-2xl" aria-hidden />
+        <div className="relative">
+          <p className="text-sm text-primary-foreground/75">{formatDate(now.now, config.timezone)}</p>
+          <h1 className="mt-1 text-2xl font-bold">Halo, {user.name}</h1>
+          <p className="mt-0.5 text-sm text-primary-foreground/80">
+            {today.length === 0 ? "Tidak ada jadwal mengajar hari ini." : `${today.length} jadwal mengajar hari ini`}
+            {overview.totals.activeSessions > 0 && ` · ${overview.totals.activeSessions} sesi aktif`}
+          </p>
+        </div>
+      </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-medium">Jadwal hari ini</h2>
-        {today.length === 0 && <p className="text-sm text-muted-foreground">Tidak ada jadwal mengajar hari ini.</p>}
+        <h2 className="font-semibold">Jadwal hari ini</h2>
+        {today.length === 0 && (
+          <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Tidak ada jadwal mengajar hari ini.</p>
+        )}
         {today.map((s) => {
           const startTime = dateToTime(s.startTime);
           const endTime = dateToTime(s.endTime);
@@ -53,32 +66,38 @@ export default async function TeacherHomePage() {
             config.openSessionEarlyMinutes,
           );
           return (
-            <Card key={s.id}>
-              <CardHeader>
+            <Card key={s.id} className={open ? "ring-2 ring-primary/40" : undefined}>
+              <CardHeader className="grid-cols-[auto_1fr] gap-x-3">
+                <div className="row-span-2 flex w-14 flex-col items-center justify-center rounded-lg bg-muted py-1.5 text-xs leading-tight tabular-nums">
+                  <span className="font-semibold">{startTime}</span>
+                  <span className="text-muted-foreground">{endTime}</span>
+                </div>
                 <CardTitle className="flex flex-wrap items-center gap-2">
                   {s.subject} · {s.className}
-                  {open && <Badge>Sesi aktif</Badge>}
+                  {open && <LiveBadge label="Sesi aktif" />}
                   {session && !open && <Badge variant="secondary">Sesi selesai</Badge>}
                 </CardTitle>
-                <CardDescription>
-                  {startTime}-{endTime}
-                </CardDescription>
+                <CardDescription>{hhmmToMinutes(endTime) - hhmmToMinutes(startTime)} menit pelajaran</CardDescription>
               </CardHeader>
               {session && statsBySession.get(session.id) && (
                 <CardContent className="text-sm" data-testid="session-stats">
                   {(() => {
                     const st = statsBySession.get(session.id)!;
+                    const present = st.hadir + st.terlambat;
                     return (
-                      <>
-                        <span className="tabular-nums">
-                          {st.hadir + st.terlambat}/{st.totalStudents} hadir
-                          {st.terlambat > 0 && ` (${st.terlambat} terlambat)`}
-                        </span>
-                        <span className="ml-2 text-muted-foreground">
-                          · {st.sudahSelesai}/{st.hadir + st.terlambat} absen selesai
-                        </span>
-                        {st.tidakSelesai > 0 && <span className="ml-2 font-medium text-destructive">{st.tidakSelesai} tidak absen selesai</span>}
-                      </>
+                      <div className="flex flex-col gap-2 rounded-lg bg-muted/60 p-3">
+                        <div>
+                          <span className="font-semibold tabular-nums">
+                            {present}/{st.totalStudents} hadir
+                          </span>
+                          {st.terlambat > 0 && <span className="text-[color-mix(in_oklch,var(--warning),black_18%)] dark:text-warning">{` (${st.terlambat} terlambat)`}</span>}
+                          <span className="ml-2 text-muted-foreground">
+                            · {st.sudahSelesai}/{present} absen selesai
+                          </span>
+                          {st.tidakSelesai > 0 && <span className="ml-2 font-medium text-destructive">{st.tidakSelesai} tidak absen selesai</span>}
+                        </div>
+                        <ProgressBar value={st.totalStudents ? Math.round((present / st.totalStudents) * 100) : 0} className="bg-background" />
+                      </div>
                     );
                   })()}
                 </CardContent>
@@ -86,6 +105,7 @@ export default async function TeacherHomePage() {
               <CardContent className="flex flex-wrap gap-2">
                 {open ? (
                   <Link href={`/guru/sesi/${session.id}`} className={buttonVariants()}>
+                    <QrCode aria-hidden />
                     Tampilkan QR dan daftar hadir
                   </Link>
                 ) : window.ok ? (
@@ -109,13 +129,16 @@ export default async function TeacherHomePage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-medium">Jadwal mengajar minggu ini</h2>
+        <h2 className="font-semibold">Jadwal mengajar minggu ini</h2>
         {schedules.length === 0 && <p className="text-sm text-muted-foreground">Belum ada jadwal. Hubungi Admin TU.</p>}
-        <ul className="divide-y rounded-xl border text-sm">
+        <ul className="surface divide-y text-sm">
           {schedules.map((s) => (
-            <li key={s.id} className="flex flex-wrap justify-between gap-2 px-4 py-2">
-              <span>
-                <span className="font-medium">{DAY_LABELS[s.day]}</span> {dateToTime(s.startTime)}-{dateToTime(s.endTime)}
+            <li
+              key={s.id}
+              className={`flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 ${s.day === now.weekday ? "bg-accent/40" : ""}`}
+            >
+              <span className="tabular-nums">
+                <span className="inline-block w-16 font-semibold">{DAY_LABELS[s.day]}</span> {dateToTime(s.startTime)}-{dateToTime(s.endTime)}
               </span>
               <span className="text-muted-foreground">
                 {s.subject} · {s.className}

@@ -46,7 +46,7 @@ export default async function ReportPage({ searchParams }: PageProps<"/admin/lap
           <p className="mb-3 text-sm text-muted-foreground" data-testid="report-meta">
             Kelas {report.className} · {report.sessionCount} sesi · {report.rows.length} siswa aktif
           </p>
-          <div className="overflow-x-auto rounded-xl border">
+          <div className="surface overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

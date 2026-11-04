@@ -2,9 +2,9 @@ import { Badge } from "@/components/ui/badge";
 import type { LeaveStatus } from "@/generated/prisma/enums";
 
 export function LeaveStatusBadge({ status }: { status: LeaveStatus }) {
-  if (status === "APPROVED") return <Badge>Disetujui</Badge>;
+  if (status === "APPROVED") return <Badge variant="success">Disetujui</Badge>;
   if (status === "REJECTED") return <Badge variant="destructive">Ditolak</Badge>;
-  return <Badge variant="outline">Menunggu</Badge>;
+  return <Badge variant="warning">Menunggu</Badge>;
 }
 
 export const LEAVE_TYPE_LABEL = { IZIN: "Izin", SAKIT: "Sakit" } as const;

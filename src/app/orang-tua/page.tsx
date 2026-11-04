@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Avatar } from "@/components/brand";
 import { PeriodFilter } from "@/components/attendance/period-filter";
 import { StudentHistory } from "@/components/attendance/student-history";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ export default async function ParentHomePage({ searchParams }: PageProps<"/orang
   if (children.length === 0) {
     return (
       <div className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold">Halo, {user.name}</h1>
+        <h1 className="text-2xl font-bold">Halo, {user.name}</h1>
         <p className="text-sm text-muted-foreground">
           Akun Anda belum terhubung dengan data siswa. Hubungi Admin TU sekolah untuk menghubungkan akun ke anak Anda.
         </p>
@@ -42,7 +43,7 @@ export default async function ParentHomePage({ searchParams }: PageProps<"/orang
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-semibold">Halo, {user.name}</h1>
+        <h1 className="text-2xl font-bold">Halo, {user.name}</h1>
         <p className="text-sm text-muted-foreground">Riwayat kehadiran anak Anda.</p>
       </div>
 
@@ -54,8 +55,10 @@ export default async function ParentHomePage({ searchParams }: PageProps<"/orang
               href={`/orang-tua?anak=${c.id}&dari=${from}&sampai=${to}`}
               aria-current={c.id === child.id ? "page" : undefined}
               className={cn(
-                "rounded-full border px-4 py-1.5 text-sm",
-                c.id === child.id ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
+                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                c.id === child.id
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                  : "bg-card hover:bg-muted",
               )}
             >
               {c.name}
@@ -64,11 +67,14 @@ export default async function ParentHomePage({ searchParams }: PageProps<"/orang
         </nav>
       )}
 
-      <div>
-        <h2 className="font-semibold" data-testid="child-name">
-          {child.name}
-        </h2>
-        <p className="text-sm text-muted-foreground">Kelas {child.className}</p>
+      <div className="surface flex items-center gap-3 p-4">
+        <Avatar name={child.name} className="size-11 text-sm" />
+        <div className="min-w-0">
+          <h2 className="truncate font-semibold" data-testid="child-name">
+            {child.name}
+          </h2>
+          <p className="text-sm text-muted-foreground">Kelas {child.className}</p>
+        </div>
       </div>
 
       <PeriodFilter from={from} to={to} hidden={{ anak: String(child.id) }} />

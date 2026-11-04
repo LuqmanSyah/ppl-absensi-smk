@@ -100,19 +100,21 @@ export function AttendanceFlow({ initialToken }: { initialToken?: string }) {
       {state.step === "scan" && (
         <>
           <p className="text-sm text-muted-foreground">Arahkan kamera ke QR Code yang ditampilkan guru di kelas.</p>
-          {state.note && <p className="text-sm text-destructive">{state.note}</p>}
+          {state.note && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{state.note}</p>
+          )}
           <QrScanner onScan={onScan} />
         </>
       )}
 
       {(state.step === "locating" || state.step === "submitting") && (
-        <StatusCard icon={<LoaderCircle className="size-10 animate-spin" />} title={state.step === "locating" ? "Mencari lokasi Anda..." : "Mengirim absensi..."}>
+        <StatusCard icon={<LoaderCircle className="size-9 animate-spin" />} title={state.step === "locating" ? "Mencari lokasi Anda..." : "Mengirim absensi..."}>
           {state.step === "locating" && "Izinkan akses lokasi jika diminta. Proses ini bisa memakan waktu beberapa detik."}
         </StatusCard>
       )}
 
       {state.step === "location_error" && (
-        <StatusCard icon={<MapPin className="size-10 text-destructive" />} title="Lokasi tidak terbaca" tone="error">
+        <StatusCard icon={<MapPin className="size-9" />} title="Lokasi tidak terbaca" tone="error">
           {state.message}
           <Actions>
             <Button onClick={() => send(state.token, "auto")}>Coba lagi</Button>
@@ -122,7 +124,7 @@ export function AttendanceFlow({ initialToken }: { initialToken?: string }) {
       )}
 
       {state.step === "network_error" && (
-        <StatusCard icon={<WifiOff className="size-10 text-destructive" />} title="Absensi gagal terkirim" tone="error">
+        <StatusCard icon={<WifiOff className="size-9" />} title="Absensi gagal terkirim" tone="error">
           Koneksi internet terputus atau server tidak bisa dihubungi. Absensi Anda <strong>belum</strong> tercatat. Biarkan halaman ini terbuka: absensi dikirim ulang otomatis saat koneksi kembali, atau tekan Coba lagi.
           <Actions>
             <Button onClick={() => send(state.token, state.mode, state.position)}>Coba lagi</Button>
@@ -156,7 +158,7 @@ function ResultView({
   switch (r.kind) {
     case "checked_in":
       return (
-        <StatusCard icon={<CheckCircle2 className="size-12 text-primary" />} title={r.status === "HADIR" ? "Absen masuk berhasil" : "Absen masuk berhasil (Terlambat)"} tone={r.status === "HADIR" ? "success" : "warning"}>
+        <StatusCard icon={<CheckCircle2 className="size-9" />} title={r.status === "HADIR" ? "Absen masuk berhasil" : "Absen masuk berhasil (Terlambat)"} tone={r.status === "HADIR" ? "success" : "warning"}>
           {r.subject}, tercatat pukul <strong>{r.time}</strong>. Status: <strong>{r.status === "HADIR" ? "Hadir" : "Terlambat"}</strong>.
           <CheckoutReminder at={r.checkoutOpensAt} />
           <Actions>{home}</Actions>
@@ -164,7 +166,7 @@ function ResultView({
       );
     case "already_checked_in":
       return (
-        <StatusCard icon={<CheckCircle2 className="size-12 text-primary" />} title="Anda sudah tercatat hadir" tone="success">
+        <StatusCard icon={<CheckCircle2 className="size-9" />} title="Anda sudah tercatat hadir" tone="success">
           {r.subject}, absen masuk pukul <strong>{r.time}</strong>.
           <CheckoutReminder at={r.checkoutOpensAt} />
           <Actions>{home}</Actions>
@@ -172,7 +174,7 @@ function ResultView({
       );
     case "checkout_not_yet":
       return (
-        <StatusCard icon={<Clock className="size-12 text-muted-foreground" />} title="Belum waktunya absen selesai">
+        <StatusCard icon={<Clock className="size-9" />} title="Belum waktunya absen selesai">
           {r.subject}, absen masuk pukul <strong>{r.checkInTime}</strong>. Absen selesai bisa dilakukan mulai pukul{" "}
           <strong>{r.checkoutOpensAt}</strong>. Scan QR yang sama lagi pada jam tersebut.
           <Actions>{home}</Actions>
@@ -180,7 +182,7 @@ function ResultView({
       );
     case "confirm_checkout":
       return (
-        <StatusCard icon={<CheckCircle2 className="size-12 text-primary" />} title="Absen selesai pelajaran">
+        <StatusCard icon={<CheckCircle2 className="size-9" />} title="Absen selesai pelajaran">
           {r.subject}, absen masuk pukul <strong>{r.checkInTime}</strong>. Lakukan absen selesai sekarang?
           <Actions>
             <Button onClick={onCheckout}>Ya, absen selesai</Button>
@@ -190,14 +192,14 @@ function ResultView({
       );
     case "checked_out":
       return (
-        <StatusCard icon={<CheckCircle2 className="size-12 text-primary" />} title="Absen selesai berhasil" tone="success">
+        <StatusCard icon={<CheckCircle2 className="size-9" />} title="Absen selesai berhasil" tone="success">
           {r.subject}, tercatat pukul <strong>{r.time}</strong>.
           <Actions>{home}</Actions>
         </StatusCard>
       );
     case "error":
       return (
-        <StatusCard icon={<TriangleAlert className="size-10 text-destructive" />} title="Absensi ditolak" tone="error">
+        <StatusCard icon={<TriangleAlert className="size-9" />} title="Absensi ditolak" tone="error">
           {r.message}
           <Actions>
             {r.retry === "location" && <Button onClick={onRetry}>Coba lagi</Button>}
@@ -211,7 +213,7 @@ function ResultView({
 
 function CheckoutReminder({ at }: { at: string }) {
   return (
-    <p className="rounded-lg bg-muted p-3">
+    <p className="rounded-xl bg-accent/60 p-3 text-accent-foreground">
       Jangan lupa <strong>absen selesai</strong> mulai pukul <strong>{at}</strong> dengan scan QR yang sama. Siswa yang tidak absen
       selesai akan ditandai di laporan.
     </p>
@@ -229,13 +231,25 @@ function StatusCard({
   tone?: "success" | "warning" | "error";
   children?: React.ReactNode;
 }) {
-  const border =
-    tone === "success" ? "border-primary/40" : tone === "warning" ? "border-amber-500/60" : tone === "error" ? "border-destructive/50" : "";
+  const styles = {
+    success: { card: "border-success/30", icon: "bg-success/10 text-success ring-success/15" },
+    warning: {
+      card: "border-warning/40",
+      icon: "bg-warning/15 text-[color-mix(in_oklch,var(--warning),black_18%)] ring-warning/20 dark:text-warning",
+    },
+    error: { card: "border-destructive/30", icon: "bg-destructive/10 text-destructive ring-destructive/15" },
+    none: { card: "", icon: "bg-accent text-primary ring-primary/10" },
+  }[tone ?? "none"];
   return (
-    <section className={`flex flex-col items-center gap-3 rounded-xl border p-6 text-center ${border}`} data-testid="attendance-status">
-      {icon}
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <div className="flex flex-col items-center gap-4 text-sm">{children}</div>
+    <section
+      className={`surface flex flex-col items-center gap-3 px-5 py-8 text-center ${styles.card}`}
+      data-testid="attendance-status"
+    >
+      <span className={`mb-1 flex size-20 items-center justify-center rounded-full ring-8 ${styles.icon}`} aria-hidden>
+        {icon}
+      </span>
+      <h2 className="text-xl font-bold">{title}</h2>
+      <div className="flex max-w-sm flex-col items-center gap-4 text-sm text-muted-foreground [&_strong]:text-foreground">{children}</div>
     </section>
   );
 }
