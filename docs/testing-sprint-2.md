@@ -76,10 +76,12 @@ Kamera dan GPS hanya bisa dipakai browser lewat **HTTPS** (atau `localhost`). Al
 5. Guru membuka sesi di laptop lewat alamat tunnel. QR akan berisi alamat tunnel.
 6. Di HP, buka alamat tunnel, login sebagai siswa, lalu menu **Absen**.
 
+**Hasil uji di HP nyata (4 November 2026):** lewat Cloudflare Tunnel, absen dari titik lokasi uji berhasil (status Hadir dan Terlambat), dan absen dari lokasi lain sekitar beberapa kilometer ditolak karena di luar radius.
+
 | No | Langkah | Hasil yang diharapkan | Lulus |
 |---|---|---|---|
-| H-01 | Android (Chrome): menu Absen | Browser meminta izin kamera; kamera belakang terbuka | [ ] |
-| H-02 | Arahkan ke QR di layar laptop | QR terbaca, browser meminta izin lokasi, lalu absen berhasil | [ ] |
+| H-01 | Android (Chrome): menu Absen | Browser meminta izin kamera; kamera belakang terbuka | [x] |
+| H-02 | Arahkan ke QR di layar laptop | QR terbaca, browser meminta izin lokasi, lalu absen berhasil | [x] |
 | H-03 | Pindai QR memakai aplikasi kamera bawaan HP (bukan dari menu Absen) | Link terbuka di browser, langsung mencari lokasi dan mengirim absensi | [ ] |
 | H-04 | iPhone (Safari): ulangi H-01 sampai H-03 | Sama | [ ] |
 | H-05 | Uji di dalam gedung/kelas | Catat akurasi yang muncul jika ditolak. Jika sering di atas 50 m, diskusikan menaikkan `MAX_GPS_ACCURACY_M` | [ ] |

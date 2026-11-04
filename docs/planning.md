@@ -81,7 +81,7 @@ Prioritas: **M** Must, **S** Should, **C** Could. PIC diisi saat Sprint Planning
 | S2-11 | Daftar kehadiran pada sesi yang dibuka guru | FR-13 | M | | [x] |
 | S2-12 | Pesan gagal yang sesuai untuk semua kasus penolakan | FR-17 | M | | [x] |
 | S2-13 | Penanganan saat absensi gagal terkirim (coba ulang, pesan jelas) | NFR-04 | S | | [x] |
-| S2-14 | Pengujian di HP nyata lewat HTTPS (kamera dan GPS) | EI-02, EI-03 | M | | [ ] |
+| S2-14 | Pengujian di HP nyata lewat HTTPS (kamera dan GPS) | EI-02, EI-03 | M | | [x] |
 
 **Definition of Done Sprint 2:** alur guru membuka sesi hingga siswa absen berjalan end-to-end di HP nyata, semua kasus penolakan (di luar radius, QR kedaluwarsa, duplikat) teruji, dan unit test untuk fungsi Haversine serta penentuan status tersedia.
 
