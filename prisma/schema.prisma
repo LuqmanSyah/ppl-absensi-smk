@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Schema database Sistem Absensi Digital Siswa.
+// Dokumentasi lengkap: docs/database.md. Jika berbeda, file ini yang berlaku.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +8,241 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ---------- Enum ----------
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum AttendanceStatus {
+  HADIR
+  TERLAMBAT
+}
+
+enum MonitoringStatus {
+  TERPANTAU
+  KELUAR_AREA
+  TIDAK_TERPANTAU
+}
+
+enum EventType {
+  CHECK_IN
+  CHECK_OUT
+  HEARTBEAT
+}
+
+enum LeaveType {
+  IZIN
+  SAKIT
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ---------- Akun dan profil ----------
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @map("password_hash")
+  role         Role
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  admin           Admin?
+  teacher         Teacher?
+  student         Student?
+  parent          Parent?
+  reviewedLeaves  LeaveRequest[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model Admin {
+  id     Int    @id @default(autoincrement())
+  userId Int    @unique @map("user_id")
+  name   String @db.VarChar(100)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("admins")
+}
+
+model Teacher {
+  id     Int    @id @default(autoincrement())
+  userId Int    @unique @map("user_id")
+  nip    String @unique @db.VarChar(30)
+  name   String @db.VarChar(100)
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  schedules Schedule[]
+  sessions  AttendanceSession[]
+
+  @@map("teachers")
+}
+
+model Parent {
+  id     Int    @id @default(autoincrement())
+  userId Int    @unique @map("user_id")
+  name   String @db.VarChar(100)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  students Student[]
+
+  @@map("parents")
+}
+
+model Student {
+  id        Int    @id @default(autoincrement())
+  userId    Int    @unique @map("user_id")
+  parentId  Int?   @map("parent_id")
+  nis       String @unique @db.VarChar(30)
+  name      String @db.VarChar(100)
+  className String @map("class_name") @db.VarChar(30)
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  parent        Parent?        @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+
+  @@index([className])
+  @@map("students")
+}
+
+// ---------- Jadwal dan lokasi ----------
+
+model Schedule {
+  id        Int      @id @default(autoincrement())
+  teacherId Int      @map("teacher_id")
+  className String   @map("class_name") @db.VarChar(30)
+  subject   String   @db.VarChar(100)
+  /// 1 = Senin ... 7 = Minggu
+  day       Int      @db.SmallInt
+  /// Waktu lokal sekolah (APP_TIMEZONE)
+  startTime DateTime @map("start_time") @db.Time(0)
+  endTime   DateTime @map("end_time") @db.Time(0)
+
+  teacher  Teacher             @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  sessions AttendanceSession[]
+
+  @@index([teacherId, day])
+  @@index([className, day])
+  @@map("schedules")
+}
+
+model SchoolLocation {
+  id        Int     @id @default(autoincrement())
+  name      String  @db.VarChar(100)
+  latitude  Decimal @db.Decimal(10, 7)
+  longitude Decimal @db.Decimal(10, 7)
+  radiusM   Int     @map("radius_m")
+  isActive  Boolean @default(true) @map("is_active")
+
+  @@map("school_locations")
+}
+
+// ---------- Absensi ----------
+
+model AttendanceSession {
+  id         Int           @id @default(autoincrement())
+  teacherId  Int           @map("teacher_id")
+  scheduleId Int           @map("schedule_id")
+  qrToken    String        @unique @map("qr_token") @db.VarChar(100)
+  openedAt   DateTime      @default(now()) @map("opened_at")
+  expiresAt  DateTime      @map("expires_at")
+  status     SessionStatus @default(ACTIVE)
+
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  schedule    Schedule     @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  attendances Attendance[]
+
+  @@index([status, expiresAt])
+  @@index([scheduleId, openedAt])
+  @@map("attendance_sessions")
+}
+
+model Attendance {
+  id               Int              @id @default(autoincrement())
+  sessionId        Int              @map("session_id")
+  studentId        Int              @map("student_id")
+  checkInAt        DateTime?        @map("check_in_at")
+  checkOutAt       DateTime?        @map("check_out_at")
+  status           AttendanceStatus
+  monitoringStatus MonitoringStatus @default(TERPANTAU) @map("monitoring_status")
+
+  session AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  student Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  events  AttendanceEvent[]
+
+  @@unique([sessionId, studentId])
+  @@index([studentId, checkInAt])
+  @@map("attendance")
+}
+
+model AttendanceEvent {
+  id           Int       @id @default(autoincrement())
+  attendanceId Int       @map("attendance_id")
+  eventType    EventType @map("event_type")
+  recordedAt   DateTime  @default(now()) @map("recorded_at")
+  latitude     Decimal   @db.Decimal(10, 7)
+  longitude    Decimal   @db.Decimal(10, 7)
+  accuracyM    Float?    @map("accuracy_m")
+  distanceM    Float?    @map("distance_m")
+  insideRadius Boolean   @map("inside_radius")
+
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+
+  @@index([attendanceId, recordedAt])
+  @@map("attendance_events")
+}
+
+// ---------- Izin/sakit dan audit ----------
+
+model LeaveRequest {
+  id         Int         @id @default(autoincrement())
+  studentId  Int         @map("student_id")
+  type       LeaveType
+  dateFrom   DateTime    @map("date_from") @db.Date
+  dateTo     DateTime    @map("date_to") @db.Date
+  reason     String
+  status     LeaveStatus @default(PENDING)
+  reviewedBy Int?        @map("reviewed_by")
+  reviewedAt DateTime?   @map("reviewed_at")
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  reviewer User?   @relation(fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([studentId, dateFrom])
+  @@map("leave_requests")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  action    String   @db.VarChar(50)
+  entity    String?  @db.VarChar(50)
+  entityId  Int?     @map("entity_id")
+  detail    Json?
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("audit_logs")
 }
