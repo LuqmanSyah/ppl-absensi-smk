@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { zonedParts } from "@/lib/time";
-import { dateOnly } from "./server";
+import { dateOnly, isSessionOpen } from "./server";
 
 export type RosterStatus = "HADIR" | "TERLAMBAT" | "IZIN" | "SAKIT" | "MENUNGGU_IZIN" | "BELUM";
 
@@ -14,9 +14,18 @@ export type RosterRow = {
   status: RosterStatus;
   checkInAt: Date | null;
   checkOutAt: Date | null;
+  /** Hadir tetapi tidak absen selesai sampai waktunya lewat. */
+  checkoutMissing: boolean;
 };
 
-export async function getSessionRoster(session: { id: number; openedAt: Date; schedule: { className: string } }) {
+export async function getSessionRoster(session: {
+  id: number;
+  openedAt: Date;
+  status: string;
+  expiresAt: Date;
+  schedule: { className: string };
+}) {
+  const open = isSessionOpen(session);
   const sessionDate = dateOnly(zonedParts(session.openedAt, config.timezone).date);
 
   const students = await prisma.student.findMany({
@@ -56,6 +65,7 @@ export async function getSessionRoster(session: { id: number; openedAt: Date; sc
       status,
       checkInAt: attendance?.checkInAt ?? null,
       checkOutAt: attendance?.checkOutAt ?? null,
+      checkoutMissing: !!attendance && !attendance.checkOutAt && !open,
     };
   });
 
@@ -68,6 +78,8 @@ export async function getSessionRoster(session: { id: number; openedAt: Date; sc
       terlambat: count("TERLAMBAT"),
       izin: count("IZIN") + count("SAKIT"),
       belum: count("BELUM") + count("MENUNGGU_IZIN"),
+      sudahSelesai: rows.filter((r) => r.checkOutAt).length,
+      tidakSelesai: rows.filter((r) => r.checkoutMissing).length,
     },
   };
 }
