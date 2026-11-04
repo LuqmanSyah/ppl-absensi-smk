@@ -5,6 +5,7 @@ import {
   House,
   LayoutDashboard,
   MapPin,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { Role } from "@/generated/prisma/enums";
@@ -21,6 +22,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/siswa", label: "Siswa", icon: GraduationCap },
     { href: "/admin/guru", label: "Guru", icon: BookOpenCheck },
+    { href: "/admin/orang-tua", label: "Orang Tua", icon: Users },
     { href: "/admin/jadwal", label: "Jadwal", icon: CalendarDays },
     { href: "/admin/lokasi", label: "Lokasi Sekolah", icon: MapPin },
   ],
