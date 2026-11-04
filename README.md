@@ -144,12 +144,42 @@ Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi
 | `npm run build` | Build untuk production |
 | `npm run start` | Menjalankan hasil build |
 | `npm run lint` | Mengecek kode dengan ESLint |
+| `npm run test:e2e` | Menjalankan pengujian end-to-end (lihat bagian Pengujian) |
 | `npx prisma migrate dev` | Membuat dan menjalankan migrasi database |
 | `npx prisma db seed` | Mengisi data contoh untuk development |
 | `npx prisma studio` | Membuka antarmuka untuk melihat isi database |
 | `docker compose up -d` | Menjalankan PostgreSQL |
 | `docker compose down` | Menghentikan PostgreSQL (data tetap aman) |
 | `docker compose down -v` | Menghentikan dan menghapus data database |
+
+## Pengujian
+
+### Pengujian end-to-end (E2E) otomatis
+
+Pengujian E2E memakai [Playwright](https://playwright.dev/). Playwright membuka browser sungguhan, login, mengisi form, dan mengklik tombol seperti pengguna, lalu memeriksa hasilnya. Skenarionya sama dengan checklist manual di `docs/testing-sprint-1.md` (nomor uji seperti `L-01` dan `D-03` tercantum di nama tes).
+
+Persiapan satu kali (mengunduh browser Chromium, sekitar 120 MB):
+
+```bash
+npx playwright install chromium
+```
+
+Menjalankan tes (pastikan database Docker/Podman sudah berjalan):
+
+```bash
+npm run test:e2e           # semua tes, sekitar 1-2 menit termasuk build
+npm run test:e2e:ui        # mode interaktif, bisa melihat browser langkah demi langkah
+npm run test:e2e:report    # membuka laporan HTML hasil terakhir
+npx playwright test e2e/04-students.spec.ts   # hanya satu file
+```
+
+Yang terjadi saat tes dijalankan:
+- Database terpisah `absensi_e2e` dibuat ulang dari nol (migrasi + seed). **Database development `absensi` tidak tersentuh.**
+- Aplikasi di-build lalu dijalankan di port `3200`, jadi `npm run dev` di port 3000 boleh tetap menyala.
+- Tes berjalan di layar desktop, dan `e2e/mobile.spec.ts` di layar HP (Pixel 7).
+- Jika ada yang gagal, screenshot dan rekaman langkah tersimpan di `test-results/`. Buka dengan `npm run test:e2e:report`.
+
+Jalankan `npm run test:e2e` sebelum membuat Pull Request. Saat menambah fitur baru, tambahkan juga tesnya di folder `e2e/`.
 
 ## Struktur Folder
 
@@ -165,6 +195,7 @@ absensi-smk/
 │   ├── components/          # Komponen UI (shadcn/ui)
 │   └── lib/                 # Helper: prisma client, geofencing, auth, dll
 ├── docs/                    # Perencanaan dan dokumentasi database
+├── e2e/                     # Pengujian end-to-end (Playwright)
 ├── docker-compose.yml       # PostgreSQL lokal
 ├── .env.example
 └── README.md

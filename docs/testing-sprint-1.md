@@ -2,6 +2,8 @@
 
 Panduan ini dipakai untuk menguji hasil Sprint 1 (akun, login, hak akses, dan data master) secara manual. Pengujian sebaiknya dilakukan oleh anggota **selain pembuat fitur** (Definition of Done poin 4).
 
+> **Versi otomatis:** hampir semua skenario di dokumen ini juga tersedia sebagai tes E2E di folder `e2e/` (nomor uji yang sama tercantum di nama tes). Jalankan `npm run test:e2e`, lihat README bagian "Pengujian". Uji manual tetap berguna untuk menilai tampilan dan kenyamanan pemakaian yang tidak bisa dinilai otomatis.
+
 Status cakupan saat ini:
 
 | Item | Fitur | Bisa diuji |
@@ -104,7 +106,7 @@ Buka `npx prisma studio`, lalu tabel `audit_logs`. Urutkan berdasarkan `id` terb
 ## 6. Data Master (S1-04 sampai S1-11)
 
 Semua uji di bagian ini dilakukan sebagai `admin`. Setiap form juga harus memenuhi aturan umum berikut:
-- Saat gagal, pesan muncul di atas form dan di bawah field yang salah, dan isian yang sudah diketik **tidak hilang** (kecuali password).
+- Saat gagal, pesan muncul di atas form dan di bawah field yang salah, dan isian yang sudah diketik **tidak hilang**.
 - Saat berhasil, kembali ke halaman daftar dan data baru langsung tampil.
 
 ### 6.1 Siswa (S1-04)
