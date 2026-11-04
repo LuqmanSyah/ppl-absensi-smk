@@ -37,3 +37,27 @@ test("form tambah siswa bisa dipakai di HP", async ({ page }) => {
   await expect(page.getByLabel("NIS")).toBeVisible();
   await expectNoHorizontalScroll(page);
 });
+
+test("siswa di HP: navigasi bawah berisi Beranda, Absen, Riwayat, Izin", async ({ page }) => {
+  await login(page, "2024001", undefined, "/siswa");
+  const bottomNav = page.getByRole("navigation", { name: "Navigasi utama" }).filter({ visible: true });
+  for (const label of ["Beranda", "Absen", "Riwayat", "Izin"]) {
+    await expect(bottomNav.getByRole("link", { name: label })).toBeVisible();
+  }
+  await bottomNav.getByRole("link", { name: "Absen" }).click();
+  await expect(page).toHaveURL("/siswa/absen");
+  await expect(page.getByRole("heading", { name: "Absen" })).toBeVisible();
+  await expectNoHorizontalScroll(page);
+
+  await bottomNav.getByRole("link", { name: "Izin" }).click();
+  await expect(page.getByRole("button", { name: "Kirim pengajuan" })).toBeVisible();
+  await expectNoHorizontalScroll(page);
+});
+
+test("guru di HP: halaman beranda dan riwayat sesi", async ({ page }) => {
+  await login(page, "guru1", undefined, "/guru");
+  await expect(page.getByRole("heading", { name: "Jadwal hari ini" })).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await page.getByRole("link", { name: "Riwayat Sesi" }).filter({ visible: true }).click();
+  await expect(page.getByRole("heading", { name: "Riwayat sesi" })).toBeVisible();
+});

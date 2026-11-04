@@ -2,7 +2,7 @@
 
 // Form generik untuk Server Action. Field di dalamnya (TextField, SelectField, ...) membaca
 // pesan error dan nilai sebelumnya lewat context, jadi halaman cukup menyusun field-nya saja.
-import { createContext, startTransition, use, useActionState, type ReactNode } from "react";
+import { createContext, startTransition, use, useActionState, useEffect, useRef, type ReactNode } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,18 @@ export function ActionForm({
   className?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initialFormState);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Saat gagal isian dipertahankan; saat berhasil (tanpa pindah halaman) form dikosongkan
+  // agar pengguna tahu datanya sudah terkirim dan tidak mengirim ulang.
+  useEffect(() => {
+    if (state.success) formRef.current?.reset();
+  }, [state]);
 
   return (
     <FormContext value={{ state, pending }}>
       <form
+        ref={formRef}
         action={formAction}
         // Tanpa ini React mengosongkan form setelah action selesai, sehingga isian hilang saat gagal.
         onSubmit={(event) => {

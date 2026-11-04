@@ -68,20 +68,20 @@ Prioritas: **M** Must, **S** Should, **C** Could. PIC diisi saat Sprint Planning
 
 | ID | Tugas | Kebutuhan | Prioritas | PIC | Status |
 |---|---|---|---|---|---|
-| S2-01 | Guru memilih kelas dan jadwal, sistem mencocokkan dengan jadwal mengajar | FR-03 | M | | [ ] |
-| S2-02 | Generate token QR, simpan sesi aktif dengan masa berlaku, tampilkan QR Code | FR-04 | M | | [ ] |
-| S2-03 | Halaman scan QR di perangkat siswa (kamera) | FR-05, EI-02 | M | | [ ] |
-| S2-04 | Ambil koordinat GPS dan akurasi dari browser, kirim ke server | FR-05 | M | | [ ] |
-| S2-05 | Validasi geofencing (Haversine) dan akurasi GPS di server | FR-06, NFR-06 | M | | [ ] |
-| S2-06 | Validasi token QR, jadwal, waktu server, dan duplikasi | FR-07, NFR-03 | M | | [ ] |
-| S2-07 | Simpan jam masuk, tentukan Hadir/Terlambat (batas 5 menit) | FR-08 | M | | [ ] |
-| S2-08 | Check-out dan simpan jam pulang | FR-09 | M | | [ ] |
-| S2-09 | Pengajuan izin/sakit oleh siswa dan alur konfirmasi | FR-11 | M | | [ ] |
-| S2-10 | Riwayat kehadiran siswa | FR-12 | M | | [ ] |
-| S2-11 | Daftar kehadiran pada sesi yang dibuka guru | FR-13 | M | | [ ] |
-| S2-12 | Pesan gagal yang sesuai untuk semua kasus penolakan | FR-17 | M | | [ ] |
-| S2-13 | Penanganan saat absensi gagal terkirim (coba ulang, pesan jelas) | NFR-04 | S | | [ ] |
-| S2-14 | Pengujian di HP nyata lewat HTTPS (kamera dan GPS) | EI-02, EI-03 | M | | [ ] |
+| S2-01 | Guru memilih kelas dan jadwal, sistem mencocokkan dengan jadwal mengajar | FR-03 | M | | [x] |
+| S2-02 | Generate token QR, simpan sesi aktif dengan masa berlaku, tampilkan QR Code | FR-04 | M | | [x] |
+| S2-03 | Halaman scan QR di perangkat siswa (kamera) | FR-05, EI-02 | M | | [x] |
+| S2-04 | Ambil koordinat GPS dan akurasi dari browser, kirim ke server | FR-05 | M | | [x] |
+| S2-05 | Validasi geofencing (Haversine) dan akurasi GPS di server | FR-06, NFR-06 | M | | [x] |
+| S2-06 | Validasi token QR, jadwal, waktu server, dan duplikasi | FR-07, NFR-03 | M | | [x] |
+| S2-07 | Simpan jam masuk, tentukan Hadir/Terlambat (batas 5 menit) | FR-08 | M | | [x] |
+| S2-08 | Check-out dan simpan jam pulang | FR-09 | M | | [x] |
+| S2-09 | Pengajuan izin/sakit oleh siswa dan alur konfirmasi | FR-11 | M | | [x] |
+| S2-10 | Riwayat kehadiran siswa | FR-12 | M | | [x] |
+| S2-11 | Daftar kehadiran pada sesi yang dibuka guru | FR-13 | M | | [x] |
+| S2-12 | Pesan gagal yang sesuai untuk semua kasus penolakan | FR-17 | M | | [x] |
+| S2-13 | Penanganan saat absensi gagal terkirim (coba ulang, pesan jelas) | NFR-04 | S | | [x] |
+| S2-14 | Pengujian di HP nyata lewat HTTPS (kamera dan GPS) | EI-02, EI-03 | M | | [x] |
 
 **Definition of Done Sprint 2:** alur guru membuka sesi hingga siswa absen berjalan end-to-end di HP nyata, semua kasus penolakan (di luar radius, QR kedaluwarsa, duplikat) teruji, dan unit test untuk fungsi Haversine serta penentuan status tersedia.
 
@@ -201,6 +201,9 @@ Variabel environment di produksi diisi lewat pengaturan hosting, dengan `AUTH_SE
 
 - [ ] Pembagian PIC untuk enam anggota (diisi pada Sprint Planning).
 - [ ] Pilihan hosting untuk demo.
-- [ ] Siapa yang mengonfirmasi izin/sakit (lihat `docs/database.md` bagian 10).
+- [x] Siapa yang mengonfirmasi izin/sakit: **Admin TU** (diputuskan 4 November 2026).
 - [ ] Aturan "keluar area" bersama pihak sekolah.
+- [x] Masa berlaku QR: sampai jam pelajaran selesai; guru bisa menutup lebih awal.
+- [x] Batas akurasi GPS: 50 m (`MAX_GPS_ACCURACY_M`).
+- [x] Check-out: boleh selama sesi masih aktif, dengan scan QR yang sama dan validasi lokasi.
 - [ ] Revisi SRS untuk tambahan struktur database.

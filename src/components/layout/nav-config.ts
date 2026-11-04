@@ -1,5 +1,9 @@
 import {
   BookOpenCheck,
+  ClipboardList,
+  FileText,
+  History,
+  QrCode,
   CalendarDays,
   GraduationCap,
   House,
@@ -25,8 +29,17 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { href: "/admin/orang-tua", label: "Orang Tua", icon: Users },
     { href: "/admin/jadwal", label: "Jadwal", icon: CalendarDays },
     { href: "/admin/lokasi", label: "Lokasi Sekolah", icon: MapPin },
+    { href: "/admin/izin", label: "Izin & Sakit", icon: FileText },
   ],
-  TEACHER: [{ href: "/guru", label: "Beranda", icon: House }],
-  STUDENT: [{ href: "/siswa", label: "Beranda", icon: House }],
+  TEACHER: [
+    { href: "/guru", label: "Beranda", icon: House },
+    { href: "/guru/sesi", label: "Riwayat Sesi", icon: ClipboardList },
+  ],
+  STUDENT: [
+    { href: "/siswa", label: "Beranda", icon: House },
+    { href: "/siswa/absen", label: "Absen", icon: QrCode },
+    { href: "/siswa/riwayat", label: "Riwayat", icon: History },
+    { href: "/siswa/izin", label: "Izin", icon: FileText },
+  ],
   PARENT: [{ href: "/orang-tua", label: "Beranda", icon: House }],
 };
