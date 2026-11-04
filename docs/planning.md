@@ -48,17 +48,17 @@ Prioritas: **M** Must, **S** Should, **C** Could. PIC diisi saat Sprint Planning
 
 | ID | Tugas | Kebutuhan | Prioritas | PIC | Status |
 |---|---|---|---|---|---|
-| S1-01 | Halaman login, hash argon2, sesi JWT di cookie `httpOnly` | FR-01, NFR-02 | M | | [ ] |
-| S1-02 | Guard akses per peran (middleware + pengecekan di server) | FR-01, NFR-02 | M | | [ ] |
-| S1-03 | Layout dan navigasi per peran (mobile-first Siswa/Guru, sidebar Admin/TU) | NFR-01 | M | | [ ] |
-| S1-04 | CRUD siswa, termasuk pembuatan akun dan relasi ke orang tua | FR-02 | M | | [ ] |
-| S1-05 | CRUD guru dan akun guru | FR-02 | M | | [ ] |
-| S1-06 | CRUD jadwal pelajaran (guru, kelas, hari, jam) | FR-02 | M | | [ ] |
-| S1-07 | CRUD lokasi sekolah (koordinat dan radius) | FR-02 | M | | [ ] |
-| S1-08 | Validasi input dengan Zod dan pesan gagal yang jelas | FR-17 | M | | [ ] |
-| S1-09 | Audit log: login, logout, perubahan data master | FR-18, NFR-07 | S | | [ ] |
-| S1-10 | Nonaktifkan akun (bukan hapus) | FR-02 | S | | [ ] |
-| S1-11 | Impor siswa dari CSV | | C | | [ ] |
+| S1-01 | Halaman login, hash argon2, sesi JWT di cookie `httpOnly` | FR-01, NFR-02 | M | | [x] |
+| S1-02 | Guard akses per peran (middleware + pengecekan di server) | FR-01, NFR-02 | M | | [x] |
+| S1-03 | Layout dan navigasi per peran (mobile-first Siswa/Guru, sidebar Admin/TU) | NFR-01 | M | | [x] |
+| S1-04 | CRUD siswa, termasuk pembuatan akun dan relasi ke orang tua | FR-02 | M | | [x] |
+| S1-05 | CRUD guru dan akun guru | FR-02 | M | | [x] |
+| S1-06 | CRUD jadwal pelajaran (guru, kelas, hari, jam) | FR-02 | M | | [x] |
+| S1-07 | CRUD lokasi sekolah (koordinat dan radius) | FR-02 | M | | [x] |
+| S1-08 | Validasi input dengan Zod dan pesan gagal yang jelas | FR-17 | M | | [x] |
+| S1-09 | Audit log: login, logout, perubahan data master | FR-18, NFR-07 | S | | [x] |
+| S1-10 | Nonaktifkan akun (bukan hapus) | FR-02 | S | | [x] |
+| S1-11 | Impor siswa dari CSV | | C | | [x] |
 
 **Definition of Done Sprint 1:** login berfungsi untuk keempat peran, rute terlindungi sesuai peran, CRUD data master berjalan dengan validasi, dan semua kode sudah di-merge ke `main` lewat Pull Request.
 
