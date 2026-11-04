@@ -19,4 +19,8 @@ export const config = {
   checkoutAfterPercent: Math.min(100, intEnv("CHECKOUT_AFTER_PERCENT", 66.67)),
   /** Absen selesai masih diterima sekian menit setelah jam pelajaran berakhir. */
   checkoutGraceMinutes: intEnv("CHECKOUT_GRACE_MINUTES", 10),
+  /** Username dikunci sementara setelah sekian kali password salah (NFR-02). */
+  loginMaxAttempts: intEnv("LOGIN_MAX_ATTEMPTS", 5),
+  /** Jendela hitungan login gagal sekaligus lama kunci, dalam menit. */
+  loginLockMinutes: intEnv("LOGIN_LOCK_MINUTES", 15),
 };

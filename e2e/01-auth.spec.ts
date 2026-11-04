@@ -1,6 +1,6 @@
 // Login dan logout (S1-01). Nomor uji mengacu ke docs/testing-sprint-1.md.
 import { expect, test } from "@playwright/test";
-import { login, logout } from "./helpers";
+import { db, login, logout, uniqueDigits } from "./helpers";
 
 test.describe("Login", () => {
   test("L-01 form kosong menampilkan pesan per field", async ({ page }) => {
@@ -22,6 +22,28 @@ test.describe("Login", () => {
     await expect(page.getByText("Username atau password salah.")).toBeVisible();
   });
 
+  test("L-11 lima kali password salah mengunci username sementara", async ({ page }) => {
+    // Akun khusus tes ini (dibuat di database) agar akun seed tidak ikut terkunci.
+    const username = `kunci${uniqueDigits()}`;
+    const [admin] = await db<{ password_hash: string }>("SELECT password_hash FROM users WHERE username = 'admin'");
+    await db("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, 'ADMIN')", [username, admin.password_hash]);
+
+    for (let i = 0; i < 5; i++) {
+      await login(page, username, "salah");
+      await expect(page.getByText("Username atau password salah.")).toBeVisible();
+    }
+    // Password benar pun ditolak selama dikunci.
+    await login(page, username);
+    await expect(page.getByText(/Terlalu banyak percobaan login yang gagal\. Coba lagi dalam 1[45] menit\./)).toBeVisible();
+    await expect(page).toHaveURL("/login");
+
+    const blocked = await db("SELECT 1 FROM audit_logs WHERE action = 'LOGIN_BLOCKED' AND detail->>'username' = $1", [username]);
+    expect(blocked).toHaveLength(1);
+
+    // Username lain tidak ikut terkunci.
+    await login(page, "admin", undefined, "/admin");
+  });
+
   const roles = [
     { username: "admin", path: "/admin", name: "Admin TU" },
     { username: "guru1", path: "/guru", name: "Budi Santoso" },
@@ -31,7 +53,7 @@ test.describe("Login", () => {
   for (const r of roles) {
     test(`L-04..07 login ${r.username} masuk ke ${r.path}`, async ({ page }) => {
       await login(page, r.username, undefined, r.path);
-      await expect(page.getByText(`Halo, ${r.name}`)).toBeVisible();
+      await expect(page.getByRole("heading", { name: `Halo, ${r.name}` })).toBeVisible();
     });
   }
 

@@ -65,6 +65,7 @@ Pastikan `AUTH_SECRET` di `.env` sudah diisi (minimal 32 karakter). Jika kosong,
 | L-08 | Setelah login, klik tombol **Keluar** | Kembali ke `/login`; membuka `/admin` lagi diarahkan ke `/login` | [x] |
 | L-09 | Setelah login, buka DevTools → Application → Cookies | Ada cookie `session` dengan centang **HttpOnly** | [x] |
 | L-10 | Hapus cookie `session` lalu refresh halaman | Diarahkan ke `/login` | [x] |
+| L-11 | Login dengan password salah 5 kali berturut-turut untuk username yang sama, lalu coba password yang benar | Ditolak "Terlalu banyak percobaan login yang gagal. Coba lagi dalam 15 menit."; username lain tetap bisa login; audit log mencatat `LOGIN_BLOCKED`. Batas diatur lewat `LOGIN_MAX_ATTEMPTS` dan `LOGIN_LOCK_MINUTES` | [x] |
 
 ## 3. Hak Akses per Peran (S1-02)
 
