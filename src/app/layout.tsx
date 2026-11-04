@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Absensi SMK Putra Perdana",
   description: "Sistem absensi digital siswa berbasis QR Code dan GPS",
+  applicationName: "Absensi SMK",
+  appleWebApp: { capable: true, title: "Absensi SMK", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#171717",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

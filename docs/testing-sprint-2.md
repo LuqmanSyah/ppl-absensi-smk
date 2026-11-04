@@ -43,7 +43,7 @@ Untuk uji di laptop, posisi GPS bisa dipalsukan lewat Chrome DevTools â†’ menu â
 | No | Langkah | Hasil yang diharapkan | Lulus |
 |---|---|---|---|
 | S-01 | Siswa di dalam radius scan QR | "Absen masuk berhasil", status Hadir (skenario no. 4) | [x] |
-| S-02 | Scan QR yang sama lagi | Muncul "Anda sudah absen masuk ... Ingin absen pulang sekarang?"; setelah **Ya, absen pulang** tercatat jam pulang; scan ketiga ditolak "sudah absen pulang" (skenario no. 9) | [x] |
+| S-02 | Scan QR yang sama lagi | Sebelum 2/3 pelajaran: "Belum waktunya absen selesai". Sesudahnya: konfirmasi, lalu **Ya, absen selesai** mencatat jam selesai; scan berikutnya ditolak "sudah absen selesai" (skenario no. 9). *Diperbarui di Sprint 3.* | [x] |
 | S-03 | Scan dari luar radius | Ditolak dengan jarak ke sekolah, tombol Coba lagi (skenario no. 6) | [x] |
 | S-04 | Scan dengan akurasi GPS buruk (> 50 m) | Ditolak "Sinyal GPS kurang akurat", berhasil setelah akurasi membaik dan Coba lagi (skenario no. 7) | [x] |
 | S-05 | Scan lebih dari 5 menit setelah sesi dibuka | Status Terlambat (skenario no. 5) | [x] |

@@ -9,7 +9,7 @@ Membangun aplikasi web absensi berbasis QR Code dan validasi GPS untuk empat per
 **Keputusan yang sudah diambil**
 - Berbasis web untuk semua peran (tanpa aplikasi mobile native), sesuai NFR-08.
 - Satu codebase full-stack TypeScript (Next.js) dengan PostgreSQL dan Prisma.
-- Pemantauan lokasi memakai kombinasi heartbeat saat halaman terbuka, QR per jam pelajaran, dan pengecekan berkala. Definisi final "keluar area" disepakati dengan sekolah.
+- Pemantauan lokasi (FR-10) memakai **absen selesai**: siswa scan QR lagi setelah 2/3 jam pelajaran, dengan validasi GPS. Menggantikan rencana awal heartbeat berkala (diputuskan 4 November 2026, lihat bagian 10).
 
 **Di luar lingkup:** penilaian akademik, penggajian, dan aplikasi mobile native.
 
@@ -20,7 +20,7 @@ Membangun aplikasi web absensi berbasis QR Code dan validasi GPS untuk empat per
 | Persiapan | sebelum 8 | Setup repo, environment, database, schema | Project berjalan di semua laptop |
 | Sprint 1 | 8-9 | Akun, login, data master | Admin bisa login dan mengelola data |
 | Sprint 2 | 10-11 | Absensi QR Code dan GPS | Siswa bisa absen, guru melihat kehadiran |
-| Sprint 3 | 12-13 | Dashboard, rekap, keluar area | Alur lengkap dari sesi sampai laporan |
+| Sprint 3 | 12-13 | Dashboard, rekap, absen selesai | Alur lengkap dari sesi sampai laporan |
 | Pengujian akhir | 13 | Perbaikan bug dan uji menyeluruh | Daftar bug kritis nol |
 | Presentasi | 14 | Demo dan presentasi | Aplikasi ter-deploy dan berjalan |
 
@@ -85,21 +85,21 @@ Prioritas: **M** Must, **S** Should, **C** Could. PIC diisi saat Sprint Planning
 
 **Definition of Done Sprint 2:** alur guru membuka sesi hingga siswa absen berjalan end-to-end di HP nyata, semua kasus penolakan (di luar radius, QR kedaluwarsa, duplikat) teruji, dan unit test untuk fungsi Haversine serta penentuan status tersedia.
 
-### Sprint 3: Dashboard, Rekap, dan Keluar Area (pertemuan 12-13)
+### Sprint 3: Dashboard, Rekap, dan Absen Selesai (pertemuan 12-13)
 
-**Sprint Goal:** Sekolah dan orang tua dapat memantau kehadiran, dan sistem mendeteksi siswa yang keluar area sesuai aturan yang disepakati.
+**Sprint Goal:** Sekolah dan orang tua dapat memantau kehadiran, dan sistem menandai siswa yang meninggalkan pelajaran sebelum selesai (tidak absen selesai).
 
 | ID | Tugas | Kebutuhan | Prioritas | PIC | Status |
 |---|---|---|---|---|---|
-| S3-01 | Dashboard kehadiran real-time (polling 5-10 detik) untuk Admin/TU dan Guru | FR-15, NFR-05 | M | | [ ] |
-| S3-02 | Rekap dan laporan per periode dan kelas | FR-16 | M | | [ ] |
-| S3-03 | Ekspor laporan ke Excel | FR-16 | S | | [ ] |
-| S3-04 | Halaman orang tua: pilih anak dan periode, lihat riwayat | FR-14 | M | | [ ] |
-| S3-05 | Heartbeat lokasi setelah check-in (Wake Lock, kirim berkala) | FR-10 | M | | [ ] |
-| S3-06 | Deteksi keluar area dan status `monitoring_status` | FR-10 | M | | [ ] |
-| S3-07 | Status "tidak terpantau" saat heartbeat berhenti | FR-10 | S | | [ ] |
-| S3-08 | PWA: install ke home screen dan antrean kirim ulang | NFR-04 | S | | [ ] |
-| S3-09 | Backup database berkala | NFR-04 | S | | [ ] |
+| S3-01 | Dashboard kehadiran real-time (polling 5-10 detik) untuk Admin/TU dan Guru | FR-15, NFR-05 | M | | [x] |
+| S3-02 | Rekap dan laporan per periode dan kelas | FR-16 | M | | [x] |
+| S3-03 | Ekspor laporan ke Excel | FR-16 | S | | [x] |
+| S3-04 | Halaman orang tua: pilih anak dan periode, lihat riwayat | FR-14 | M | | [x] |
+| S3-05 | ~~Heartbeat lokasi~~ diganti: absen selesai dibuka setelah 2/3 pelajaran, divalidasi GPS | FR-09, FR-10 | M | | [x] |
+| S3-06 | Tanda "Tidak absen selesai" di daftar hadir, dashboard, laporan, dan Excel | FR-10, FR-16 | M | | [x] |
+| S3-07 | Waktu tambahan absen selesai (10 menit setelah pelajaran) dan absen masuk ditutup saat pelajaran berakhir | FR-10 | S | | [x] |
+| S3-08 | PWA: install ke home screen dan antrean kirim ulang | NFR-04 | S | | [x] |
+| S3-09 | Backup database berkala | NFR-04 | S | | [x] |
 | S3-10 | Grafik ringkasan di dashboard | FR-15 | C | | [ ] |
 | S3-11 | Upgrade polling ke Server-Sent Events | NFR-05 | C | | [ ] |
 
@@ -160,7 +160,7 @@ Prioritas: **M** Must, **S** Should, **C** Could. PIC diisi saat Sprint Planning
 | 10 | Waktu perangkat siswa diubah | Tidak berpengaruh, server memakai waktu sendiri |
 | 11 | Siswa mengajukan izin/sakit | Status PENDING, lalu berubah setelah dikonfirmasi |
 | 12 | Orang tua melihat anak lain | Tidak bisa, hanya anak yang terhubung |
-| 13 | Siswa check-in lalu menutup halaman | Status pemantauan menjadi tidak terpantau |
+| 13 | Siswa absen masuk lalu tidak absen selesai | Tetap hadir, ditandai "Tidak absen selesai" di daftar hadir dan laporan |
 | 14 | Admin mengunduh rekap per kelas | Data sesuai dengan database |
 
 ## 7. Risiko dan Mitigasi
@@ -172,7 +172,7 @@ Mengacu pada SRS bagian 3.5, ditambah risiko pelaksanaan proyek.
 | Akurasi GPS buruk di dalam gedung | Absensi sah ditolak | Radius tidak terlalu ketat, batas akurasi dikonfigurasi, uji langsung di sekolah |
 | Pemalsuan lokasi (fake GPS) | Absen dari luar sekolah | QR kedaluwarsa per sesi, validasi akurasi di server, audit log |
 | Koneksi internet sekolah tidak stabil | Absensi gagal terkirim | Pesan jelas dan coba ulang, PWA dengan antrean |
-| Pemantauan background tidak mungkin di web | FR-10 tidak sepenuhnya real-time | Heartbeat, QR per jam pelajaran, status "tidak terpantau"; aturan disepakati dengan sekolah |
+| Pemantauan background tidak mungkin di web | FR-10 tidak bisa real-time | Diganti absen selesai setelah 2/3 pelajaran dengan validasi GPS; keterbatasan dijelaskan ke sekolah dan dosen |
 | Kamera/GPS diblokir tanpa HTTPS | Fitur inti tidak jalan | Wajib HTTPS saat uji dan deploy, tunnel HTTPS untuk development |
 | Perubahan schema bentrok antar anggota | Migrasi gagal, waktu terbuang | Satu orang memegang schema di awal, perubahan lewat PR dan diumumkan |
 | Jadwal sempit (enam pertemuan) | Fitur tidak selesai | Prioritas Must lebih dulu, item Could dibuang tanpa ragu |
@@ -202,8 +202,8 @@ Variabel environment di produksi diisi lewat pengaturan hosting, dengan `AUTH_SE
 - [ ] Pembagian PIC untuk enam anggota (diisi pada Sprint Planning).
 - [ ] Pilihan hosting untuk demo.
 - [x] Siapa yang mengonfirmasi izin/sakit: **Admin TU** (diputuskan 4 November 2026).
-- [ ] Aturan "keluar area" bersama pihak sekolah.
-- [x] Masa berlaku QR: sampai jam pelajaran selesai; guru bisa menutup lebih awal.
+- [x] Aturan "keluar area": **diganti absen selesai** (diputuskan 4 November 2026). Siswa scan QR lagi setelah 2/3 durasi pelajaran (dihitung dari jam mulai jadwal) sampai 10 menit setelah pelajaran berakhir, dengan validasi GPS. Yang tidak absen selesai tetap dihitung hadir dengan tanda "Tidak absen selesai". Alasan: aplikasi web tidak bisa membaca lokasi di latar belakang, heartbeat boros baterai dan banyak menghasilkan status "tidak terpantau" palsu. **Perlu dikonfirmasi ke dosen** karena mengubah cara memenuhi FR-10 di SRS.
+- [x] Masa berlaku QR: sampai 10 menit setelah jam pelajaran selesai (untuk absen selesai); guru bisa menutup lebih awal.
 - [x] Batas akurasi GPS: 50 m (`MAX_GPS_ACCURACY_M`).
-- [x] Check-out: boleh selama sesi masih aktif, dengan scan QR yang sama dan validasi lokasi.
+- [x] Check-out (absen selesai): scan QR yang sama dengan validasi lokasi, mulai 2/3 pelajaran sampai 10 menit setelah pelajaran berakhir. Absen masuk ditutup saat pelajaran berakhir.
 - [ ] Revisi SRS untuk tambahan struktur database.

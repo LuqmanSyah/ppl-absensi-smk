@@ -31,9 +31,9 @@ Status pengerjaan mengikuti rencana sprint di bawah. Centang diperbarui seiring 
 - [x] Validasi jadwal, waktu server, lokasi (radius dan akurasi GPS), serta duplikasi
 - [x] Status Hadir/Terlambat otomatis (batas 5 menit)
 - [x] Pengajuan izin atau sakit dengan konfirmasi
-- [ ] Dashboard kehadiran real-time dan rekap laporan
-- [ ] Deteksi siswa keluar area sekolah
-- [ ] Pencatatan aktivitas pengguna (audit log)
+- [x] Dashboard kehadiran real-time dan rekap laporan
+- [x] Absen selesai pelajaran (validasi lokasi menjelang akhir pelajaran, pengganti deteksi keluar area berkala)
+- [x] Pencatatan aktivitas pengguna (audit log)
 
 ## Tech Stack
 
@@ -137,6 +137,8 @@ Buka [http://localhost:3000](http://localhost:3000).
 | `LATE_AFTER_MINUTES` | Opsional. Batas menit sebelum siswa dianggap Terlambat | `5` |
 | `MAX_GPS_ACCURACY_M` | Opsional. Akurasi GPS terburuk yang diterima (meter) | `50` |
 | `OPEN_SESSION_EARLY_MINUTES` | Opsional. Guru boleh membuka sesi N menit sebelum jam mulai | `15` |
+| `CHECKOUT_AFTER_PERCENT` | Opsional. Absen selesai dibuka setelah sekian persen durasi pelajaran | `66.67` |
+| `CHECKOUT_GRACE_MINUTES` | Opsional. Absen selesai masih diterima N menit setelah jam pelajaran berakhir | `10` |
 
 Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi anggota tim.
 
@@ -148,7 +150,8 @@ Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi
 | `npm run build` | Build untuk production |
 | `npm run start` | Menjalankan hasil build |
 | `npm run lint` | Mengecek kode dengan ESLint |
-| `npm test` | Menjalankan unit test (Haversine, status Terlambat, zona waktu) |
+| `npm test` | Menjalankan unit test (Haversine, status Terlambat, jendela absen selesai, zona waktu) |
+| `npm run db:backup` | Membuat backup database ke folder `backups/` (lihat bagian Backup) |
 | `npm run test:e2e` | Menjalankan pengujian end-to-end (lihat bagian Pengujian) |
 | `npx prisma migrate dev` | Membuat dan menjalankan migrasi database |
 | `npx prisma db seed` | Mengisi data contoh untuk development |
@@ -169,7 +172,7 @@ Menguji fungsi murni tanpa database: rumus Haversine dan validasi lokasi, penent
 
 ### Pengujian end-to-end (E2E) otomatis
 
-Pengujian E2E memakai [Playwright](https://playwright.dev/). Playwright membuka browser sungguhan, login, mengisi form, dan mengklik tombol seperti pengguna, lalu memeriksa hasilnya. Skenarionya sama dengan checklist manual di `docs/testing-sprint-1.md` dan `docs/testing-sprint-2.md` (nomor uji seperti `L-01` dan `D-03` tercantum di nama tes).
+Pengujian E2E memakai [Playwright](https://playwright.dev/). Playwright membuka browser sungguhan, login, mengisi form, dan mengklik tombol seperti pengguna, lalu memeriksa hasilnya. Skenarionya sama dengan checklist manual di `docs/testing-sprint-1.md` sampai `docs/testing-sprint-3.md` (nomor uji seperti `L-01` dan `D-03` tercantum di nama tes).
 
 Persiapan satu kali (mengunduh browser Chromium, sekitar 120 MB):
 
@@ -195,6 +198,31 @@ Yang terjadi saat tes dijalankan:
 
 Jalankan `npm run test:e2e` sebelum membuat Pull Request. Saat menambah fitur baru, tambahkan juga tesnya di folder `e2e/`.
 
+## Backup dan Pemeliharaan
+
+**Backup database** (NFR-04):
+
+```bash
+npm run db:backup                          # simpan ke ./backups, 14 backup terakhir disimpan
+BACKUP_DIR=/mnt/backup KEEP=30 npm run db:backup
+```
+
+Skrip memakai `pg_dump` jika terpasang, atau menjalankannya di dalam container `absensi-db` (Docker/Podman). Untuk memulihkan:
+
+```bash
+pg_restore --clean --no-owner -d "$DATABASE_URL" backups/absensi-YYYYMMDD-HHMMSS.dump
+```
+
+Contoh jadwal backup harian dengan `crontab -e` di server:
+
+```cron
+0 2 * * * cd /path/ke/absensi-smk && npm run db:backup >> backups/backup.log 2>&1
+```
+
+Simpan salinan backup di tempat lain (misalnya Google Drive atau server lain), bukan hanya di server yang sama.
+
+**Memasang aplikasi di HP (PWA):** buka aplikasi lewat HTTPS di Chrome Android, lalu menu ⋮ → **Tambahkan ke layar utama** / **Instal aplikasi**. Di iPhone: Safari → tombol Bagikan → **Tambah ke Layar Utama**.
+
 ## Struktur Folder
 
 ```
@@ -210,6 +238,7 @@ absensi-smk/
 │   └── lib/                 # Helper: prisma client, geofencing, auth, dll
 ├── docs/                    # Perencanaan dan dokumentasi database
 ├── e2e/                     # Pengujian end-to-end (Playwright)
+├── scripts/                 # Backup database
 ├── docker-compose.yml       # PostgreSQL lokal
 ├── .env.example
 └── README.md
@@ -220,6 +249,7 @@ absensi-smk/
 - Semua waktu kehadiran ditentukan dari **waktu server**, bukan dari perangkat pengguna.
 - Absensi ditolak jika di luar radius sekolah atau akurasi GPS terlalu rendah.
 - Siswa dianggap **Terlambat** jika check-in melewati 5 menit dari waktu mulai sesi.
+- Siswa melakukan **absen selesai** dengan scan QR yang sama setelah 2/3 jam pelajaran berlalu (sampai 10 menit setelah pelajaran berakhir). Siswa yang hadir tetapi tidak absen selesai tetap dihitung hadir, dengan tanda "Tidak absen selesai" di laporan.
 - Semua validasi (token QR, jadwal, lokasi, duplikasi) dilakukan di sisi server.
 
 ## Metode dan Rencana Pengembangan
@@ -230,7 +260,7 @@ Metode pengembangan: **Agile Scrum** (3 sprint, tiap sprint 2 pertemuan).
 |---|---|---|
 | Sprint 1 | 8–9 | Akun, login, role, data master |
 | Sprint 2 | 10–11 | Absensi QR Code dan GPS, validasi, status, izin/sakit |
-| Sprint 3 | 12–13 | Dashboard, rekap, deteksi keluar area, pengujian akhir |
+| Sprint 3 | 12–13 | Dashboard, rekap, absen selesai, pengujian akhir |
 | Presentasi | 14 | Demo dan presentasi |
 
 ## Alur Kerja Git (Tim)

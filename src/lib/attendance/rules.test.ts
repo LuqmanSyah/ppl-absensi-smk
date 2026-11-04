@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { attendanceStatus, buildAttendanceUrl, extractToken, sessionWindow } from "./rules";
+import { attendancePhase, attendanceStatus, buildAttendanceUrl, checkoutWindow, extractToken, sessionWindow } from "./rules";
 
 describe("attendanceStatus (FR-08, batas 5 menit)", () => {
   const opened = new Date("2026-11-02T00:00:00Z");
@@ -52,5 +52,51 @@ describe("token QR", () => {
     assert.equal(extractToken("https://contoh.com/?x=1"), null);
     assert.equal(extractToken("halo"), null);
     assert.equal(extractToken("abc<script>"), null);
+  });
+});
+
+describe("checkoutWindow (absen selesai setelah 2/3 pelajaran)", () => {
+  test("pelajaran 45 menit: dibuka menit ke-30", () => {
+    const w = checkoutWindow({ start: new Date("2026-11-02T00:00:00Z"), end: new Date("2026-11-02T00:45:00Z") }, 66.67, 10);
+    assert.equal(w.opensAt.toISOString(), "2026-11-02T00:30:00.000Z");
+  });
+  const at = (hhmm: string) => new Date(`2026-11-02T${hhmm}:00Z`);
+
+  test("pelajaran 30 menit: dibuka menit ke-20, ditutup 10 menit setelah selesai", () => {
+    const w = checkoutWindow({ start: at("00:00"), end: at("00:30") }, 66.67, 10);
+    assert.equal(w.opensAt.toISOString(), at("00:20").toISOString());
+    assert.equal(w.closesAt.toISOString(), at("00:40").toISOString());
+  });
+  test("pelajaran 90 menit: dibuka menit ke-60", () => {
+    const w = checkoutWindow({ start: at("00:00"), end: at("01:30") }, 66.67, 10);
+    assert.equal(w.opensAt.toISOString(), at("01:00").toISOString());
+  });
+  test("persentase bisa diatur", () => {
+    const w = checkoutWindow({ start: at("00:00"), end: at("01:00") }, 50, 0);
+    assert.equal(w.opensAt.toISOString(), at("00:30").toISOString());
+    assert.equal(w.closesAt.toISOString(), at("01:00").toISOString());
+  });
+});
+
+describe("attendancePhase", () => {
+  const at = (hhmm: string) => new Date(`2026-11-02T${hhmm}:00Z`);
+  const lesson = { start: at("00:00"), end: at("01:30") };
+  const window = { opensAt: at("01:00"), closesAt: at("01:40") };
+
+  test("belum absen, pelajaran berjalan: boleh absen masuk", () => {
+    assert.equal(attendancePhase(at("00:10"), lesson, window, false), "CHECK_IN");
+  });
+  test("belum absen, pelajaran sudah selesai: absen masuk ditutup", () => {
+    assert.equal(attendancePhase(at("01:30"), lesson, window, false), "CLOSED");
+  });
+  test("sudah absen masuk, belum 2/3 pelajaran: tunggu", () => {
+    assert.equal(attendancePhase(at("00:59"), lesson, window, true), "WAIT_CHECKOUT");
+  });
+  test("sudah absen masuk, jendela dibuka: boleh absen selesai", () => {
+    assert.equal(attendancePhase(at("01:00"), lesson, window, true), "CHECKOUT");
+    assert.equal(attendancePhase(at("01:40"), lesson, window, true), "CHECKOUT");
+  });
+  test("lewat waktu tambahan: ditutup", () => {
+    assert.equal(attendancePhase(at("01:41"), lesson, window, true), "CLOSED");
   });
 });

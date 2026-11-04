@@ -2,10 +2,9 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { BackLink } from "@/components/data-list";
 import { AutoRefresh } from "@/components/attendance/auto-refresh";
-import { AttendanceBadge } from "@/components/attendance/status-badge";
+import { RosterView } from "@/components/attendance/roster-view";
 import { ConfirmActionButton } from "@/components/form/confirm-button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireRole } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
@@ -13,7 +12,7 @@ import { parseId } from "@/lib/params";
 import { dateToTime } from "@/lib/schedule-time";
 import { formatDate, formatTime } from "@/lib/time";
 import { buildAttendanceUrl } from "@/lib/attendance/rules";
-import { getAppOrigin, isSessionOpen } from "@/lib/attendance/server";
+import { getAppOrigin, isSessionOpen, lessonTimes } from "@/lib/attendance/server";
 import { getSessionRoster } from "@/lib/attendance/roster";
 import { closeSession } from "../../actions";
 
@@ -30,6 +29,7 @@ export default async function SessionPage({ params }: PageProps<"/guru/sesi/[id]
   if (!session || session.teacher.userId !== user.id) notFound();
 
   const open = isSessionOpen(session);
+  const times = lessonTimes(session);
   const [{ rows, summary }, origin] = await Promise.all([getSessionRoster(session), getAppOrigin()]);
   const qrUrl = buildAttendanceUrl(origin, session.qrToken);
   const qrImage = open ? await QRCode.toDataURL(qrUrl, { width: 640, margin: 1, errorCorrectionLevel: "M" }) : null;
@@ -55,8 +55,9 @@ export default async function SessionPage({ params }: PageProps<"/guru/sesi/[id]
           {/* eslint-disable-next-line @next/next/no-img-element -- data URL hasil generate server */}
           <img src={qrImage} alt="QR Code absensi sesi ini" className="aspect-square w-full max-w-sm" data-testid="session-qr" />
           <p className="text-center text-sm text-muted-foreground">
-            Minta siswa scan QR ini dari menu <strong>Absen</strong>. Berlaku sampai {formatTime(session.expiresAt, tz)}. Siswa yang
-            absen lebih dari {config.lateAfterMinutes} menit setelah sesi dibuka tercatat Terlambat.
+            Minta siswa scan QR ini dari menu <strong>Absen</strong> untuk absen masuk (sampai {formatTime(times.end, tz)}). Siswa yang
+            absen lebih dari {config.lateAfterMinutes} menit setelah sesi dibuka tercatat Terlambat. Tampilkan QR lagi mulai pukul{" "}
+            <strong>{formatTime(times.opensAt, tz)}</strong> untuk <strong>absen selesai</strong> (sampai {formatTime(times.closesAt, tz)}).
           </p>
           <ConfirmActionButton
             action={closeSession.bind(null, session.id)}
@@ -67,50 +68,7 @@ export default async function SessionPage({ params }: PageProps<"/guru/sesi/[id]
         </section>
       )}
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Ringkasan kehadiran" data-testid="roster-summary">
-          <span>Hadir: <strong>{summary.hadir}</strong></span>
-          <span>Terlambat: <strong>{summary.terlambat}</strong></span>
-          <span>Izin/Sakit: <strong>{summary.izin}</strong></span>
-          <span>{open ? "Belum absen" : "Tidak hadir"}: <strong>{summary.belum}</strong></span>
-          <span className="text-muted-foreground">dari {summary.total} siswa</span>
-        </div>
-        {open && <p className="text-xs text-muted-foreground">Daftar diperbarui otomatis setiap 10 detik.</p>}
-        <div className="overflow-x-auto rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Masuk</TableHead>
-                <TableHead>Pulang</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                    Belum ada siswa aktif di kelas {session.schedule.className}.
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((r) => (
-                <TableRow key={r.studentId}>
-                  <TableCell>
-                    <span className="font-medium">{r.name}</span>
-                    <span className="block font-mono text-xs text-muted-foreground">{r.nis}</span>
-                  </TableCell>
-                  <TableCell>
-                    <AttendanceBadge status={r.status} ended={!open} />
-                  </TableCell>
-                  <TableCell className="tabular-nums">{r.checkInAt ? formatTime(r.checkInAt, tz) : "-"}</TableCell>
-                  <TableCell className="tabular-nums">{r.checkOutAt ? formatTime(r.checkOutAt, tz) : "-"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
+      <RosterView rows={rows} summary={summary} open={open} className={session.schedule.className} checkoutOpensAt={times.opensAt} />
     </div>
   );
 }

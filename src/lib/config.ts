@@ -15,4 +15,8 @@ export const config = {
   maxGpsAccuracyM: intEnv("MAX_GPS_ACCURACY_M", 50),
   /** Guru boleh membuka sesi N menit sebelum jam pelajaran dimulai. */
   openSessionEarlyMinutes: intEnv("OPEN_SESSION_EARLY_MINUTES", 15),
+  /** Absen selesai baru bisa dilakukan setelah sekian persen durasi pelajaran berlalu (default 2/3). */
+  checkoutAfterPercent: Math.min(100, intEnv("CHECKOUT_AFTER_PERCENT", 66.67)),
+  /** Absen selesai masih diterima sekian menit setelah jam pelajaran berakhir. */
+  checkoutGraceMinutes: intEnv("CHECKOUT_GRACE_MINUTES", 10),
 };
