@@ -225,7 +225,8 @@ Pengajuan izin atau sakit.
 1. **Satu akun satu peran.** `users.role` menentukan tabel profil mana yang terisi. Setiap tabel profil memiliki `user_id` unik, dan aplikasi memastikan peran sesuai.
 2. **Waktu selalu dari server.** `check_in_at`, `check_out_at`, dan `recorded_at` diisi server, tidak pernah diterima dari browser (NFR-03).
 3. **Status terlambat.** `status = TERLAMBAT` jika `check_in_at - attendance_sessions.opened_at` lebih dari 5 menit, selain itu `HADIR` (FR-08).
-4. **Geofencing di server.** Jarak dihitung dengan rumus Haversine terhadap lokasi aktif. Hasilnya disimpan di `attendance_events` (`distance_m`, `inside_radius`). Absensi dengan `inside_radius = false` ditolak dan tidak membuat baris `attendance`.
+4. **Geofencing di server.** Jarak dihitung dengan rumus Haversine terhadap lokasi aktif. Hasilnya disimpan di `attendance_events` (`distance_m`, `inside_radius`). Absensi dengan `inside_radius = false` ditolak dan tidak membuat baris `attendance`. Percobaan yang ditolak dicatat di `audit_logs` dengan aksi `ATTENDANCE_REJECTED` (kode alasan, jarak, dan akurasi), **tanpa** koordinat asli siswa.
+4a. **Sesi absensi.** Satu sesi per jadwal per hari. `expires_at` = jam selesai jadwal pada hari itu. Sesi bisa dibuka mulai 15 menit sebelum jam mulai (`OPEN_SESSION_EARLY_MINUTES`). Jika guru menutup lalu membuka lagi di hari yang sama, sesi dan QR yang sama dipakai kembali.
 5. **Tanpa penghapusan fisik.** Siswa, guru, dan akun dinonaktifkan lewat `is_active`. Relasi ke `attendance` memakai aturan **Restrict** agar riwayat tidak hilang.
 6. **Cascade hanya untuk data turunan.** Menghapus `attendance` boleh menghapus `attendance_events` miliknya, tetapi tidak sebaliknya.
 7. **Izin dan sakit.** Pengajuan yang berstatus `APPROVED` dibaca saat menyusun rekap, tidak membuat baris `attendance`. Siswa tanpa baris `attendance` dan tanpa izin pada hari sekolah dihitung sebagai alpa di tingkat laporan.
@@ -287,8 +288,8 @@ Password akun seed hanya untuk development dan **tidak boleh dipakai di producti
 ## 10. Hal yang Perlu Disepakati
 
 - [ ] Tambahan struktur di bagian 2 disetujui tim dan dicatat sebagai revisi SRS.
-- [ ] Siapa yang mengonfirmasi izin/sakit (guru, wali kelas, atau Admin/TU).
+- [x] Siapa yang mengonfirmasi izin/sakit: **Admin TU**. `leave_requests.reviewed_by` berisi id user admin.
 - [ ] Definisi "keluar area" dan nilai `monitoring_status` (SRS 2.4, FR-10) bersama pihak sekolah.
-- [ ] Batas akurasi GPS maksimum yang diterima (nilai awal yang disarankan: 50 m).
+- [x] Batas akurasi GPS maksimum: **50 m**, diatur lewat `MAX_GPS_ACCURACY_M`.
 - [ ] Masa retensi data lokasi `HEARTBEAT`.
 - [ ] Apakah satu siswa bisa terhubung ke lebih dari satu orang tua (saat ini hanya satu `parent_id`).

@@ -26,11 +26,11 @@ Status pengerjaan mengikuti rencana sprint di bawah. Centang diperbarui seiring 
 
 - [x] Login akun individual dengan pembatasan hak akses per peran
 - [x] Kelola data master (siswa, akun, jadwal, lokasi sekolah)
-- [ ] Guru membuka sesi absensi dan menampilkan QR Code
-- [ ] Siswa check-in/check-out dengan scan QR dan GPS
-- [ ] Validasi jadwal, waktu server, lokasi (radius dan akurasi GPS), serta duplikasi
-- [ ] Status Hadir/Terlambat otomatis (batas 5 menit)
-- [ ] Pengajuan izin atau sakit dengan konfirmasi
+- [x] Guru membuka sesi absensi dan menampilkan QR Code
+- [x] Siswa check-in/check-out dengan scan QR dan GPS
+- [x] Validasi jadwal, waktu server, lokasi (radius dan akurasi GPS), serta duplikasi
+- [x] Status Hadir/Terlambat otomatis (batas 5 menit)
+- [x] Pengajuan izin atau sakit dengan konfirmasi
 - [ ] Dashboard kehadiran real-time dan rekap laporan
 - [ ] Deteksi siswa keluar area sekolah
 - [ ] Pencatatan aktivitas pengguna (audit log)
@@ -133,6 +133,10 @@ Buka [http://localhost:3000](http://localhost:3000).
 | `DATABASE_URL` | Connection string PostgreSQL | `postgresql://absensi:absensi@localhost:5432/absensi` |
 | `AUTH_SECRET` | Kunci rahasia penandatangan sesi/JWT | hasil `openssl rand -base64 32` |
 | `APP_TIMEZONE` | Zona waktu sekolah untuk perhitungan keterlambatan | `Asia/Jakarta` |
+| `APP_URL` | Opsional. Alamat aplikasi yang ditulis di QR Code. Kosongkan untuk memakai alamat yang sedang dibuka | `https://absensi.contoh.id` |
+| `LATE_AFTER_MINUTES` | Opsional. Batas menit sebelum siswa dianggap Terlambat | `5` |
+| `MAX_GPS_ACCURACY_M` | Opsional. Akurasi GPS terburuk yang diterima (meter) | `50` |
+| `OPEN_SESSION_EARLY_MINUTES` | Opsional. Guru boleh membuka sesi N menit sebelum jam mulai | `15` |
 
 Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi anggota tim.
 
@@ -144,6 +148,7 @@ Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi
 | `npm run build` | Build untuk production |
 | `npm run start` | Menjalankan hasil build |
 | `npm run lint` | Mengecek kode dengan ESLint |
+| `npm test` | Menjalankan unit test (Haversine, status Terlambat, zona waktu) |
 | `npm run test:e2e` | Menjalankan pengujian end-to-end (lihat bagian Pengujian) |
 | `npx prisma migrate dev` | Membuat dan menjalankan migrasi database |
 | `npx prisma db seed` | Mengisi data contoh untuk development |
@@ -154,9 +159,17 @@ Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi
 
 ## Pengujian
 
+### Unit test
+
+```bash
+npm test
+```
+
+Menguji fungsi murni tanpa database: rumus Haversine dan validasi lokasi, penentuan Hadir/Terlambat, jendela waktu membuka sesi, dan konversi zona waktu. Memakai test runner bawaan Node.js (`node:test`). File tes berada di samping kodenya dengan akhiran `.test.ts`.
+
 ### Pengujian end-to-end (E2E) otomatis
 
-Pengujian E2E memakai [Playwright](https://playwright.dev/). Playwright membuka browser sungguhan, login, mengisi form, dan mengklik tombol seperti pengguna, lalu memeriksa hasilnya. Skenarionya sama dengan checklist manual di `docs/testing-sprint-1.md` (nomor uji seperti `L-01` dan `D-03` tercantum di nama tes).
+Pengujian E2E memakai [Playwright](https://playwright.dev/). Playwright membuka browser sungguhan, login, mengisi form, dan mengklik tombol seperti pengguna, lalu memeriksa hasilnya. Skenarionya sama dengan checklist manual di `docs/testing-sprint-1.md` dan `docs/testing-sprint-2.md` (nomor uji seperti `L-01` dan `D-03` tercantum di nama tes).
 
 Persiapan satu kali (mengunduh browser Chromium, sekitar 120 MB):
 
@@ -177,6 +190,7 @@ Yang terjadi saat tes dijalankan:
 - Database terpisah `absensi_e2e` dibuat ulang dari nol (migrasi + seed). **Database development `absensi` tidak tersentuh.**
 - Aplikasi di-build lalu dijalankan di port `3200`, jadi `npm run dev` di port 3000 boleh tetap menyala.
 - Tes berjalan di layar desktop, dan `e2e/mobile.spec.ts` di layar HP (Pixel 7).
+- Tes absensi membuat kelas uji `XII E2E` dengan jadwal yang sedang berlangsung dan memalsukan posisi GPS browser. Karena bergantung pada jam, tes absensi dilewati otomatis antara pukul 22:50 dan 00:20 WIB.
 - Jika ada yang gagal, screenshot dan rekaman langkah tersimpan di `test-results/`. Buka dengan `npm run test:e2e:report`.
 
 Jalankan `npm run test:e2e` sebelum membuat Pull Request. Saat menambah fitur baru, tambahkan juga tesnya di folder `e2e/`.
