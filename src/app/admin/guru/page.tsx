@@ -40,7 +40,7 @@ export default async function TeachersPage({ searchParams }: PageProps<"/admin/g
         action={<AddButton href="/admin/guru/baru" label="Tambah guru" />}
       />
       <SearchBar q={query} placeholder="Cari nama, NIP, atau username" />
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="surface overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

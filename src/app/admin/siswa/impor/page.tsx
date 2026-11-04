@@ -12,7 +12,7 @@ export default async function ImportStudentsPage() {
       <BackLink href="/admin/siswa" label="Data siswa" />
       <PageHeader title="Impor Siswa dari CSV" description="Untuk mendaftarkan banyak siswa sekaligus." />
 
-      <div className="mb-6 max-w-xl rounded-xl border bg-muted/30 p-4 text-sm">
+      <div className="mb-6 max-w-xl rounded-xl border border-dashed bg-muted/40 p-4 text-sm">
         <p className="font-medium">Format file</p>
         <p className="mt-1 text-muted-foreground">
           Baris pertama berisi judul kolom <code>nis</code>, <code>nama</code>, <code>kelas</code>. Pemisah boleh koma

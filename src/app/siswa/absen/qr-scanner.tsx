@@ -48,9 +48,11 @@ export function QrScanner({ onScan }: { onScan: (text: string) => void }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div id={ELEMENT_ID} className="aspect-square w-full overflow-hidden rounded-xl bg-muted" />
+      <div className="relative overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border">
+        <div id={ELEMENT_ID} className="aspect-square w-full" />
+      </div>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
           {error}
         </p>
       )}

@@ -133,8 +133,11 @@ export function CheckboxField({
 
 export function FormSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <fieldset className="flex flex-col gap-5 rounded-xl border p-4">
-      <legend className="px-1 text-sm font-medium">{title}</legend>
+    <fieldset className="surface flex flex-col gap-5 p-5 pt-4">
+      <legend className="sr-only">{title}</legend>
+      <p className="-mx-5 border-b px-5 pb-3 text-sm font-semibold" aria-hidden>
+        {title}
+      </p>
       {children}
     </fieldset>
   );

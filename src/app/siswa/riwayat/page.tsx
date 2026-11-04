@@ -53,7 +53,7 @@ export default async function StudentHistoryPage({ searchParams }: PageProps<"/s
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-xl font-semibold">Riwayat kehadiran</h1>
+      <h1 className="text-2xl font-bold">Riwayat kehadiran</h1>
       <form method="get" className="flex gap-2">
         <select name="bulan" defaultValue={month} aria-label="Bulan" className={selectClassName}>
           {months.map((ym) => (
@@ -75,7 +75,7 @@ export default async function StudentHistoryPage({ searchParams }: PageProps<"/s
         {attendances.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan kehadiran di bulan ini.</p>}
         <ul className="flex flex-col gap-2">
           {attendances.map((a) => (
-            <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-sm">
+            <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 surface p-3 text-sm">
               <div>
                 <p className="font-medium">{a.session.schedule.subject}</p>
                 <p className="text-muted-foreground">
@@ -91,10 +91,10 @@ export default async function StudentHistoryPage({ searchParams }: PageProps<"/s
 
       {leaves.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="font-medium">Izin / sakit</h2>
+          <h2 className="font-semibold">Izin / sakit</h2>
           <ul className="flex flex-col gap-2">
             {leaves.map((l) => (
-              <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-sm">
+              <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 surface p-3 text-sm">
                 <span>
                   {LEAVE_TYPE_LABEL[l.type]} · {formatLeaveRange(l.dateFrom, l.dateTo)}
                 </span>

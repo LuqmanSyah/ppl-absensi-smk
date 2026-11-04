@@ -24,7 +24,7 @@ export default async function LocationsPage() {
           Belum ada lokasi aktif. Siswa tidak akan bisa absen sampai satu lokasi diaktifkan.
         </p>
       )}
-      <div className="overflow-x-auto rounded-xl border">
+      <div className="surface overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -54,7 +54,7 @@ export default async function LocationsPage() {
                 </TableCell>
                 <TableCell className="tabular-nums">{l.radiusM} m</TableCell>
                 <TableCell>
-                  {l.isActive ? <Badge>Aktif</Badge> : <Badge variant="outline">Tidak dipakai</Badge>}
+                  {l.isActive ? <Badge variant="success">Aktif</Badge> : <Badge variant="outline">Tidak dipakai</Badge>}
                 </TableCell>
                 <TableCell className="text-right">
                   <EditLink href={`/admin/lokasi/${l.id}`} />

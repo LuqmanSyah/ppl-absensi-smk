@@ -24,7 +24,7 @@ export function NavLinks({ role, variant }: { role: Role; variant: Variant }) {
       aria-label="Navigasi utama"
       className={cn(
         variant === "sidebar" && "flex flex-col gap-1",
-        variant === "top" && "flex gap-1 overflow-x-auto",
+        variant === "top" && "flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]",
         variant === "bottom" && "grid auto-cols-fr grid-flow-col",
       )}
     >
@@ -36,19 +36,37 @@ export function NavLinks({ role, variant }: { role: Role; variant: Variant }) {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center rounded-md text-sm font-medium transition-colors",
-              variant === "sidebar" && "gap-3 px-3 py-2",
-              variant === "top" && "shrink-0 gap-2 px-3 py-1.5",
-              variant === "bottom" && "flex-col gap-1 py-2 text-xs",
-              active
-                ? variant === "bottom"
-                  ? "text-primary"
-                  : "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              "group/nav flex items-center text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+              variant === "sidebar" && [
+                "relative gap-3 rounded-lg px-3 py-2",
+                active ? "bg-accent font-semibold text-accent-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              ],
+              variant === "top" && [
+                "shrink-0 gap-2 rounded-full px-3 py-1.5",
+                active ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25" : "bg-muted text-muted-foreground hover:text-foreground",
+              ],
+              variant === "bottom" && [
+                "flex-col gap-1 rounded-lg py-2 text-[0.7rem]",
+                active ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground",
+              ],
             )}
           >
-            <Icon className={variant === "bottom" ? "size-5" : "size-4"} aria-hidden />
+            {variant === "bottom" ? (
+              <span
+                className={cn(
+                  "flex h-7 w-14 items-center justify-center rounded-full transition-colors",
+                  active ? "bg-accent text-accent-foreground" : "group-hover/nav:bg-muted",
+                )}
+              >
+                <Icon className="size-5" aria-hidden />
+              </span>
+            ) : (
+              <Icon className={cn("size-4", variant === "sidebar" && active && "text-primary")} aria-hidden />
+            )}
             {label}
+            {variant === "sidebar" && active && (
+              <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-primary" aria-hidden />
+            )}
           </Link>
         );
       })}

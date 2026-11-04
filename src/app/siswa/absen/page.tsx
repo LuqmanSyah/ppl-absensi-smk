@@ -10,7 +10,7 @@ export default async function StudentAttendancePage({ searchParams }: PageProps<
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold">Absen</h1>
+        <h1 className="text-2xl font-bold">Absen</h1>
         <p className="text-sm text-muted-foreground">
           Pastikan Anda berada di area sekolah dan GPS aktif. Akurasi lokasi minimal {config.maxGpsAccuracyM} m.
         </p>

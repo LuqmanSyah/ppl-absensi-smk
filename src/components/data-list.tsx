@@ -1,7 +1,7 @@
 // Komponen bersama untuk halaman daftar data master.
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Plus, Search } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +19,14 @@ export function AddButton({ href, label }: { href: string; label: string }) {
 export function EditLink({ href }: { href: string }) {
   return (
     <Link href={href} className={buttonVariants({ variant: "outline", size: "sm" })}>
+      <Pencil aria-hidden />
       Ubah
     </Link>
   );
 }
 
 export function StatusBadge({ active }: { active: boolean }) {
-  return active ? <Badge variant="secondary">Aktif</Badge> : <Badge variant="destructive">Nonaktif</Badge>;
+  return active ? <Badge variant="success">Aktif</Badge> : <Badge variant="destructive">Nonaktif</Badge>;
 }
 
 /** Form pencarian memakai GET, sehingga hasil pencarian bisa di-bookmark dan dibagikan. */
@@ -41,8 +42,8 @@ export function SearchBar({
   return (
     <form method="get" className="mb-4 flex flex-wrap gap-2" role="search">
       <div className="relative min-w-48 flex-1">
-        <Search className="absolute top-2 left-2.5 size-4 text-muted-foreground" aria-hidden />
-        <Input name="q" defaultValue={q} placeholder={placeholder} aria-label={placeholder} className="pl-8" />
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Input name="q" defaultValue={q} placeholder={placeholder} aria-label={placeholder} className="pl-9" />
       </div>
       {filter && (
         <select
@@ -69,7 +70,7 @@ export function SearchBar({
 export function EmptyRow({ colSpan, children }: { colSpan: number; children: ReactNode }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="py-10 text-center text-sm text-muted-foreground">
+      <td colSpan={colSpan} className="py-12 text-center text-sm text-muted-foreground">
         {children}
       </td>
     </tr>
@@ -78,8 +79,12 @@ export function EmptyRow({ colSpan, children }: { colSpan: number; children: Rea
 
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground">
-      ← {label}
+    <Link
+      href={href}
+      className="mb-4 inline-flex items-center gap-1 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+    >
+      <ChevronLeft className="size-4" aria-hidden />
+      {label}
     </Link>
   );
 }
