@@ -30,12 +30,12 @@ Setiap sprint berlangsung dua pertemuan dan ditutup dengan **Sprint Review** (de
 
 | ID | Tugas | PIC | Status |
 |---|---|---|---|
-| S0-01 | Buat repo GitHub, undang semua anggota, aktifkan proteksi branch `main` | | [ ] |
-| S0-02 | Setup Next.js, Prisma 7, Tailwind, shadcn/ui | | [ ] |
-| S0-03 | `docker-compose.yml` PostgreSQL, `.env.example`, README | | [ ] |
-| S0-04 | Schema Prisma awal dan migrasi pertama (lihat `docs/database.md`) | | [ ] |
-| S0-05 | Seed data pengembangan | | [ ] |
-| S0-06 | Konfigurasi ESLint, format commit, dan template Pull Request | | [ ] |
+| S0-01 | Buat repo GitHub, undang semua anggota, aktifkan proteksi branch `main` | | [x] |
+| S0-02 | Setup Next.js, Prisma 7, Tailwind, shadcn/ui | | [x] |
+| S0-03 | `docker-compose.yml` PostgreSQL, `.env.example`, README | | [x] |
+| S0-04 | Schema Prisma awal dan migrasi pertama (lihat `docs/database.md`) | | [x] |
+| S0-05 | Seed data pengembangan | | [x] |
+| S0-06 | Konfigurasi ESLint, format commit, dan template Pull Request | | [x] |
 | S0-07 | Pastikan semua anggota bisa menjalankan project dari nol | | [ ] |
 
 ## 4. Product Backlog per Sprint
