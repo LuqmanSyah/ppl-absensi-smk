@@ -90,18 +90,31 @@ docker compose up -d
 docker compose ps        # tunggu sampai status healthy
 ```
 
+> Pengguna Podman (misalnya Fedora) bisa mengganti `docker compose` dengan `podman compose`.
+
 ### 4. Pasang dependensi
 
 ```bash
-npm install
+npm install              # otomatis menjalankan `prisma generate`
 ```
 
 ### 5. Siapkan database
 
 ```bash
-npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate dev   # menjalankan migrasi yang sudah ada di prisma/migrations
+npx prisma db seed       # mengisi data contoh untuk development
 ```
+
+Akun hasil seed (password semua akun: `password123`, **hanya untuk development**):
+
+| Peran | Username |
+|---|---|
+| Admin/TU | `admin` |
+| Guru | `guru1`, `guru2` |
+| Orang Tua | `ortu1`, `ortu2` |
+| Siswa | `2024001` sampai `2024006` (NIS) |
+
+Prisma Client di-generate ke `src/generated/prisma` (tidak di-commit). Jalankan `npx prisma generate` setiap kali `schema.prisma` berubah.
 
 ### 6. Jalankan aplikasi
 
@@ -132,6 +145,7 @@ Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi
 | `npm run start` | Menjalankan hasil build |
 | `npm run lint` | Mengecek kode dengan ESLint |
 | `npx prisma migrate dev` | Membuat dan menjalankan migrasi database |
+| `npx prisma db seed` | Mengisi data contoh untuk development |
 | `npx prisma studio` | Membuka antarmuka untuk melihat isi database |
 | `docker compose up -d` | Menjalankan PostgreSQL |
 | `docker compose down` | Menghentikan PostgreSQL (data tetap aman) |
@@ -143,12 +157,14 @@ Jangan pernah meng-commit file `.env`. Gunakan `.env.example` sebagai acuan bagi
 absensi-smk/
 ├── prisma/
 │   ├── schema.prisma        # Model data (dari class diagram SRS)
+│   ├── seed.ts              # Data contoh untuk development
 │   └── migrations/
 ├── prisma.config.ts         # Konfigurasi Prisma CLI
 ├── src/
 │   ├── app/                 # Halaman dan route handler (App Router)
 │   ├── components/          # Komponen UI (shadcn/ui)
 │   └── lib/                 # Helper: prisma client, geofencing, auth, dll
+├── docs/                    # Perencanaan dan dokumentasi database
 ├── docker-compose.yml       # PostgreSQL lokal
 ├── .env.example
 └── README.md
@@ -187,7 +203,7 @@ Metode pengembangan: **Agile Scrum** (3 sprint, tiap sprint 2 pertemuan).
 
 **Kamera atau lokasi tidak muncul di HP.** Akses harus lewat HTTPS atau `localhost`, dan izin kamera/lokasi di browser harus diizinkan.
 
-**Error setelah mengubah `schema.prisma`.** Jalankan ulang `npx prisma migrate dev` dan `npx prisma generate`.
+**Error setelah mengubah `schema.prisma`.** Buat migrasi dengan `npx prisma migrate dev --name <nama-perubahan>`, lalu jalankan `npx prisma generate`.
 
 ## Tim Pengembang (Kelompok 7)
 
