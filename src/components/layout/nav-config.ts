@@ -1,5 +1,6 @@
 import {
   BookOpenCheck,
+  BarChart3,
   ClipboardList,
   FileText,
   History,
@@ -30,6 +31,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { href: "/admin/jadwal", label: "Jadwal", icon: CalendarDays },
     { href: "/admin/lokasi", label: "Lokasi Sekolah", icon: MapPin },
     { href: "/admin/izin", label: "Izin & Sakit", icon: FileText },
+    { href: "/admin/laporan", label: "Laporan", icon: BarChart3 },
   ],
   TEACHER: [
     { href: "/guru", label: "Beranda", icon: House },
