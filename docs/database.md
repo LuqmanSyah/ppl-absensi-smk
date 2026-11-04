@@ -58,8 +58,8 @@ erDiagram
 | `Role` | `ADMIN`, `TEACHER`, `STUDENT`, `PARENT` | Satu akun hanya satu peran |
 | `SessionStatus` | `ACTIVE`, `CLOSED` | Status sesi absensi |
 | `AttendanceStatus` | `HADIR`, `TERLAMBAT` | Ditentukan otomatis oleh server |
-| `MonitoringStatus` | `TERPANTAU`, `KELUAR_AREA`, `TIDAK_TERPANTAU` | Hasil pemantauan lokasi setelah check-in |
-| `EventType` | `CHECK_IN`, `CHECK_OUT`, `HEARTBEAT` | Jenis kejadian lokasi |
+| `MonitoringStatus` | `TERPANTAU`, `KELUAR_AREA`, `TIDAK_TERPANTAU` | **Belum dipakai** sejak pemantauan berkala diganti absen selesai; disimpan untuk pengembangan berikutnya |
+| `EventType` | `CHECK_IN`, `CHECK_OUT`, `HEARTBEAT` | Jenis kejadian lokasi (`HEARTBEAT` belum dipakai) |
 | `LeaveType` | `IZIN`, `SAKIT` | Jenis pengajuan |
 | `LeaveStatus` | `PENDING`, `APPROVED`, `REJECTED` | Status konfirmasi pengajuan |
 
@@ -158,12 +158,12 @@ Satu baris per siswa per sesi.
 | check_in_at | timestamp | nullable | Waktu server |
 | check_out_at | timestamp | nullable | Waktu server |
 | status | AttendanceStatus | NN | |
-| monitoring_status | MonitoringStatus | NN, default `TERPANTAU` | Tambahan dari class diagram |
+| monitoring_status | MonitoringStatus | NN, default `TERPANTAU` | Tambahan dari class diagram; belum dipakai (lihat bagian 7 poin 7a) |
 
 Constraint tambahan: **UQ (`session_id`, `student_id`)** untuk mencegah check-in ganda (FR-07).
 
 ### 5.10 `attendance_events`
-Catatan lokasi tiap kejadian (check-in, check-out, heartbeat).
+Catatan lokasi tiap kejadian (absen masuk dan absen selesai).
 
 | Kolom | Tipe | Constraint | Keterangan |
 |---|---|---|---|
@@ -216,7 +216,7 @@ Pengajuan izin atau sakit.
 | attendance_sessions | index (`schedule_id`, `opened_at`) | Riwayat sesi per jadwal |
 | attendance | UQ (`session_id`, `student_id`) | Cegah duplikasi |
 | attendance | index (`student_id`, `check_in_at`) | Riwayat siswa dan orang tua |
-| attendance_events | index (`attendance_id`, `recorded_at`) | Heartbeat per siswa |
+| attendance_events | index (`attendance_id`, `recorded_at`) | Riwayat lokasi per absensi |
 | leave_requests | index (`student_id`, `date_from`) | |
 | audit_logs | index (`user_id`, `created_at`) | Penelusuran aktivitas |
 
@@ -230,7 +230,8 @@ Pengajuan izin atau sakit.
 5. **Tanpa penghapusan fisik.** Siswa, guru, dan akun dinonaktifkan lewat `is_active`. Relasi ke `attendance` memakai aturan **Restrict** agar riwayat tidak hilang.
 6. **Cascade hanya untuk data turunan.** Menghapus `attendance` boleh menghapus `attendance_events` miliknya, tetapi tidak sebaliknya.
 7. **Izin dan sakit.** Pengajuan yang berstatus `APPROVED` dibaca saat menyusun rekap, tidak membuat baris `attendance`. Siswa tanpa baris `attendance` dan tanpa izin pada hari sekolah dihitung sebagai alpa di tingkat laporan.
-8. **Retensi data lokasi.** Data `HEARTBEAT` adalah data sensitif siswa di bawah umur. Disarankan dihapus berkala (misalnya setelah 30 hari), sedangkan `CHECK_IN` dan `CHECK_OUT` disimpan sebagai bukti absensi. Durasi final disepakati dengan sekolah.
+7a. **Absen selesai (FR-09, FR-10).** Pemantauan lokasi berkala (heartbeat) tidak dipakai. Sebagai gantinya siswa melakukan absen selesai (`check_out_at`, event `CHECK_OUT` dengan validasi radius) mulai 2/3 durasi pelajaran (`CHECKOUT_AFTER_PERCENT`, dihitung dari jam mulai jadwal) sampai `CHECKOUT_GRACE_MINUTES` (10) menit setelah pelajaran berakhir. Absen masuk ditutup saat pelajaran berakhir; `attendance_sessions.expires_at` = jam selesai + 10 menit. Siswa yang hadir tetapi `check_out_at` kosong setelah sesi berakhir ditampilkan "Tidak absen selesai" di laporan, tanpa mengubah status Hadir/Terlambat. Kolom `monitoring_status` dan nilai `HEARTBEAT` dibiarkan agar tidak perlu migrasi.
+8. **Retensi data lokasi.** Koordinat hanya disimpan saat absen masuk dan absen selesai sebagai bukti absensi. Percobaan absen yang ditolak hanya mencatat jarak dan akurasi di `audit_logs`, tanpa koordinat.
 
 ## 8. Contoh Query
 
@@ -261,14 +262,14 @@ GROUP BY st.id
 ORDER BY st.name;
 ```
 
-**Siswa yang terdeteksi keluar area pada sesi tertentu** (FR-10):
+**Siswa yang hadir tetapi tidak absen selesai pada sesi tertentu** (FR-10):
 
 ```sql
 SELECT st.nis, st.name, a.check_in_at
 FROM attendance a
 JOIN students st ON st.id = a.student_id
 WHERE a.session_id = $1
-  AND a.monitoring_status = 'KELUAR_AREA';
+  AND a.check_out_at IS NULL;
 ```
 
 ## 9. Data Seed (untuk Pengembangan)
@@ -289,7 +290,7 @@ Password akun seed hanya untuk development dan **tidak boleh dipakai di producti
 
 - [ ] Tambahan struktur di bagian 2 disetujui tim dan dicatat sebagai revisi SRS.
 - [x] Siapa yang mengonfirmasi izin/sakit: **Admin TU**. `leave_requests.reviewed_by` berisi id user admin.
-- [ ] Definisi "keluar area" dan nilai `monitoring_status` (SRS 2.4, FR-10) bersama pihak sekolah.
+- [x] Definisi "keluar area": **diganti absen selesai** setelah 2/3 pelajaran (lihat bagian 7 poin 7a). Perlu dikonfirmasi ke dosen dan pihak sekolah.
 - [x] Batas akurasi GPS maksimum: **50 m**, diatur lewat `MAX_GPS_ACCURACY_M`.
-- [ ] Masa retensi data lokasi `HEARTBEAT`.
+- [x] Masa retensi data lokasi `HEARTBEAT`: tidak relevan lagi karena heartbeat tidak dipakai.
 - [ ] Apakah satu siswa bisa terhubung ke lebih dari satu orang tua (saat ini hanya satu `parent_id`).
