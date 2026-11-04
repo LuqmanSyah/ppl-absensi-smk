@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { dateToTime } from "@/lib/schedule-time";
 import { formatDate, formatTime } from "@/lib/time";
-import { isSessionOpen, schoolNow, todayRange } from "@/lib/attendance/server";
+import { isSessionOpen, lessonTimes, schoolNow, todayRange } from "@/lib/attendance/server";
 
 export default async function StudentHomePage() {
   const user = await requireRole("STUDENT");
@@ -70,9 +70,13 @@ export default async function StudentHomePage() {
                 </CardDescription>
               </CardHeader>
               {attendance && (
-                <CardContent className="text-sm text-muted-foreground">
+                <CardContent className="text-sm text-muted-foreground" data-testid="lesson-checkout">
                   Masuk {formatTime(attendance.checkInAt!, tz)}
-                  {attendance.checkOutAt && ` · Pulang ${formatTime(attendance.checkOutAt, tz)}`}
+                  {attendance.checkOutAt
+                    ? ` · Selesai ${formatTime(attendance.checkOutAt, tz)}`
+                    : open
+                      ? ` · Absen selesai mulai ${formatTime(lessonTimes({ openedAt: session.openedAt, schedule: s }).opensAt, tz)}`
+                      : " · Tidak absen selesai"}
                 </CardContent>
               )}
             </Card>

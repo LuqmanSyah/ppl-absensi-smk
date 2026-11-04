@@ -80,7 +80,7 @@ export default async function StudentHistoryPage({ searchParams }: PageProps<"/s
                 <p className="font-medium">{a.session.schedule.subject}</p>
                 <p className="text-muted-foreground">
                   {formatDate(a.checkInAt!, tz, { weekday: "short", month: "short" })} · Masuk {formatTime(a.checkInAt!, tz)}
-                  {a.checkOutAt ? ` · Pulang ${formatTime(a.checkOutAt, tz)}` : ""}
+                  {a.checkOutAt ? ` · Selesai ${formatTime(a.checkOutAt, tz)}` : ""}
                 </p>
               </div>
               <AttendanceBadge status={a.status} />

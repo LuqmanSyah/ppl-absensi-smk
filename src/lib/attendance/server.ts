@@ -3,7 +3,9 @@ import "server-only";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
-import { zonedDayRange, zonedParts } from "@/lib/time";
+import { zonedDayRange, zonedParts, zonedToUtc } from "@/lib/time";
+import { dateToTime } from "@/lib/schedule-time";
+import { checkoutWindow } from "./rules";
 
 /** Waktu server saat ini dalam zona waktu sekolah (NFR-03: tidak pernah memakai jam perangkat). */
 export function schoolNow() {
@@ -36,4 +38,19 @@ export function isSessionOpen(session: { status: string; expiresAt: Date }, now 
 /** "YYYY-MM-DD" -> Date untuk kolom @db.Date (tengah malam UTC). */
 export function dateOnly(date: string) {
   return new Date(`${date}T00:00:00Z`);
+}
+
+
+/**
+ * Jam pelajaran dan jendela absen selesai untuk satu sesi, dihitung dari jadwal pada tanggal sesi.
+ * Absen selesai dibuka setelah 2/3 pelajaran (CHECKOUT_AFTER_PERCENT) dan ditutup
+ * CHECKOUT_GRACE_MINUTES setelah jam selesai.
+ */
+export function lessonTimes(session: { openedAt: Date; schedule: { startTime: Date; endTime: Date } }) {
+  const date = zonedParts(session.openedAt, config.timezone).date;
+  const lesson = {
+    start: zonedToUtc(date, dateToTime(session.schedule.startTime), config.timezone),
+    end: zonedToUtc(date, dateToTime(session.schedule.endTime), config.timezone),
+  };
+  return { ...lesson, ...checkoutWindow(lesson, config.checkoutAfterPercent, config.checkoutGraceMinutes) };
 }

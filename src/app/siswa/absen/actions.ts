@@ -1,8 +1,11 @@
 "use server";
 
-// Check-in dan check-out siswa (FR-05 sampai FR-09, FR-17, NFR-03, NFR-06).
+// Absen masuk dan absen selesai siswa (FR-05 sampai FR-10, FR-17, NFR-03, NFR-06).
 // Semua keputusan diambil di server memakai waktu server; data dari browser hanya
 // token QR dan posisi GPS, dan keduanya divalidasi ulang di sini.
+//
+// Absen selesai menggantikan pemantauan lokasi berkala: dibuka setelah 2/3 pelajaran berlalu
+// dan divalidasi GPS lagi, sehingga membuktikan siswa masih di sekolah menjelang akhir pelajaran.
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
@@ -12,8 +15,8 @@ import { logAudit } from "@/lib/audit";
 import { config } from "@/lib/config";
 import { formatTime } from "@/lib/time";
 import { checkLocation } from "@/lib/attendance/geo";
-import { attendanceStatus } from "@/lib/attendance/rules";
-import { getActiveLocation, isSessionOpen } from "@/lib/attendance/server";
+import { attendancePhase, attendanceStatus } from "@/lib/attendance/rules";
+import { getActiveLocation, isSessionOpen, lessonTimes } from "@/lib/attendance/server";
 
 const inputSchema = z.object({
   token: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/),
@@ -33,11 +36,14 @@ export type ErrorCode =
   | "NO_LOCATION"
   | "ACCURACY"
   | "OUTSIDE"
+  | "CHECK_IN_CLOSED"
+  | "CHECKOUT_CLOSED"
   | "ALREADY_CHECKED_OUT";
 
 export type AttendanceResult =
-  | { kind: "checked_in"; status: "HADIR" | "TERLAMBAT"; time: string; subject: string; className: string }
-  | { kind: "already_checked_in"; status: "HADIR" | "TERLAMBAT"; time: string; subject: string }
+  | { kind: "checked_in"; status: "HADIR" | "TERLAMBAT"; time: string; subject: string; checkoutOpensAt: string }
+  | { kind: "already_checked_in"; status: "HADIR" | "TERLAMBAT"; time: string; subject: string; checkoutOpensAt: string }
+  | { kind: "checkout_not_yet"; checkInTime: string; subject: string; checkoutOpensAt: string }
   | { kind: "confirm_checkout"; checkInTime: string; subject: string }
   | { kind: "checked_out"; time: string; subject: string }
   | { kind: "error"; code: ErrorCode; message: string; retry: "location" | "scan" | "none" };
@@ -85,7 +91,29 @@ export async function submitAttendance(raw: AttendanceInput): Promise<Attendance
     return reject("SESSION_ENDED", "Sesi absensi ini sudah ditutup atau kedaluwarsa. Hubungi guru Anda.", "none", sessionInfo);
   }
 
-  // 4. Lokasi: akurasi lalu radius (geofencing)
+  // 4. Tahap absen: masuk hanya sampai jam selesai; selesai hanya setelah 2/3 pelajaran
+  const tz = config.timezone;
+  const subject = `${session.schedule.subject} (${session.schedule.className})`;
+  const times = lessonTimes(session);
+  const checkoutOpensAt = formatTime(times.opensAt, tz);
+  const existing = await prisma.attendance.findUnique({
+    where: { sessionId_studentId: { sessionId: session.id, studentId: student.id } },
+  });
+  if (existing?.checkOutAt) {
+    return fail("ALREADY_CHECKED_OUT", `Anda sudah absen selesai pukul ${formatTime(existing.checkOutAt, tz)} di pelajaran ini.`, "none");
+  }
+  const phase = attendancePhase(now, times, times, !!existing);
+  if (phase === "WAIT_CHECKOUT") {
+    // Belum waktunya: tidak perlu memeriksa lokasi, cukup beri tahu kapan absen selesai dibuka.
+    return { kind: "checkout_not_yet", checkInTime: formatTime(existing!.checkInAt!, tz), subject, checkoutOpensAt };
+  }
+  if (phase === "CLOSED") {
+    return existing
+      ? reject("CHECKOUT_CLOSED", `Waktu absen selesai sudah lewat (sampai pukul ${formatTime(times.closesAt, tz)}).`, "none", sessionInfo)
+      : reject("CHECK_IN_CLOSED", "Jam pelajaran sudah selesai, absen masuk ditutup. Hubungi guru Anda.", "none", sessionInfo);
+  }
+
+  // 5. Lokasi: akurasi lalu radius (geofencing)
   const school = await getActiveLocation();
   if (!school) return fail("NO_LOCATION", "Lokasi sekolah belum diatur. Hubungi Admin TU.", "none");
 
@@ -119,19 +147,9 @@ export async function submitAttendance(raw: AttendanceInput): Promise<Attendance
     insideRadius: true,
     recordedAt: now,
   };
-  const tz = config.timezone;
-  const subject = `${session.schedule.subject} (${session.schedule.className})`;
-
-  // 5. Sudah pernah absen di sesi ini?
-  const existing = await prisma.attendance.findUnique({
-    where: { sessionId_studentId: { sessionId: session.id, studentId: student.id } },
-  });
-
+  // 6. Absen selesai
   if (existing) {
-    if (existing.checkOutAt) {
-      return fail("ALREADY_CHECKED_OUT", `Anda sudah absen pulang pukul ${formatTime(existing.checkOutAt, tz)} di sesi ini.`, "none");
-    }
-    // Scan kedua tidak langsung dianggap pulang, agar scan ganda tidak sengaja tidak mengakhiri kehadiran.
+    // Tetap minta konfirmasi agar scan yang tidak disengaja tidak langsung mengakhiri kehadiran.
     if (input.mode !== "checkout") {
       return { kind: "confirm_checkout", checkInTime: formatTime(existing.checkInAt!, tz), subject };
     }
@@ -148,7 +166,7 @@ export async function submitAttendance(raw: AttendanceInput): Promise<Attendance
     return fail("INVALID_INPUT", "Anda belum absen masuk di sesi ini.", "scan");
   }
 
-  // 6. Simpan check-in dan tentukan status Hadir/Terlambat
+  // 7. Simpan absen masuk dan tentukan status Hadir/Terlambat
   const status = attendanceStatus(session.openedAt, now, config.lateAfterMinutes);
   try {
     const attendance = await prisma.attendance.create({
@@ -173,11 +191,11 @@ export async function submitAttendance(raw: AttendanceInput): Promise<Attendance
       const again = await prisma.attendance.findUniqueOrThrow({
         where: { sessionId_studentId: { sessionId: session.id, studentId: student.id } },
       });
-      return { kind: "already_checked_in", status: again.status, time: formatTime(again.checkInAt!, tz), subject };
+      return { kind: "already_checked_in", status: again.status, time: formatTime(again.checkInAt!, tz), subject, checkoutOpensAt };
     }
     throw error;
   }
 
   revalidatePath("/siswa", "layout");
-  return { kind: "checked_in", status, time: formatTime(now, tz), subject, className: session.schedule.className };
+  return { kind: "checked_in", status, time: formatTime(now, tz), subject, checkoutOpensAt };
 }

@@ -74,8 +74,9 @@ export async function openSession(scheduleId: number): Promise<FormState> {
         scheduleId,
         qrToken: randomBytes(32).toString("base64url"),
         openedAt: now.now,
-        // QR berlaku sampai jam pelajaran selesai (keputusan tim).
-        expiresAt: zonedToUtc(now.date, end, config.timezone),
+        // QR berlaku sampai jam pelajaran selesai ditambah waktu absen selesai (keputusan tim).
+        // Absen masuk tetap hanya sampai jam selesai; dicek di Server Action absensi.
+        expiresAt: new Date(zonedToUtc(now.date, end, config.timezone).getTime() + config.checkoutGraceMinutes * 60_000),
       },
     });
     sessionId = session.id;
