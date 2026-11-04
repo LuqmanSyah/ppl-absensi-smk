@@ -33,7 +33,7 @@ Setiap sprint berlangsung dua pertemuan dan ditutup dengan **Sprint Review** (de
 | S0-01 | Buat repo GitHub, undang semua anggota, aktifkan proteksi branch `main` | | [ ] |
 | S0-02 | Setup Next.js, Prisma 7, Tailwind, shadcn/ui | | [ ] |
 | S0-03 | `docker-compose.yml` PostgreSQL, `.env.example`, README | | [ ] |
-| S0-04 | Schema Prisma awal dan migrasi pertama (lihat `docs/DATABASE.md`) | | [ ] |
+| S0-04 | Schema Prisma awal dan migrasi pertama (lihat `docs/database.md`) | | [ ] |
 | S0-05 | Seed data pengembangan | | [ ] |
 | S0-06 | Konfigurasi ESLint, format commit, dan template Pull Request | | [ ] |
 | S0-07 | Pastikan semua anggota bisa menjalankan project dari nol | | [ ] |
@@ -201,6 +201,6 @@ Variabel environment di produksi diisi lewat pengaturan hosting, dengan `AUTH_SE
 
 - [ ] Pembagian PIC untuk enam anggota (diisi pada Sprint Planning).
 - [ ] Pilihan hosting untuk demo.
-- [ ] Siapa yang mengonfirmasi izin/sakit (lihat `docs/DATABASE.md` bagian 10).
+- [ ] Siapa yang mengonfirmasi izin/sakit (lihat `docs/database.md` bagian 10).
 - [ ] Aturan "keluar area" bersama pihak sekolah.
 - [ ] Revisi SRS untuk tambahan struktur database.
