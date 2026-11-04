@@ -22,6 +22,7 @@ Membangun aplikasi web absensi berbasis QR Code dan validasi GPS untuk empat per
 | Sprint 2 | 10-11 | Absensi QR Code dan GPS | Siswa bisa absen, guru melihat kehadiran |
 | Sprint 3 | 12-13 | Dashboard, rekap, absen selesai | Alur lengkap dari sesi sampai laporan |
 | Pengujian akhir | 13 | Perbaikan bug dan uji menyeluruh | Daftar bug kritis nol |
+| Sprint 4 (usulan) | menunggu persetujuan | Aplikasi mobile Siswa dan Orang Tua | APK Android dengan geofencing dan notifikasi |
 | Presentasi | 14 | Demo dan presentasi | Aplikasi ter-deploy dan berjalan |
 
 Setiap sprint berlangsung dua pertemuan dan ditutup dengan **Sprint Review** (demo ke dosen/stakeholder) serta **Sprint Retrospective** (evaluasi cara kerja tim).
@@ -122,6 +123,41 @@ Prioritas: **M** Must, **S** Should, **C** Could. PIC diisi saat Sprint Planning
 - [ ] Slide presentasi selesai
 - [ ] Cadangan jika koneksi bermasalah (rekaman layar demo)
 
+### Sprint 4 (usulan): Aplikasi Mobile Siswa dan Orang Tua
+
+> **Status: draf untuk didiskusikan tim dan dikonfirmasi ke dosen.** Aplikasi mobile native saat ini tercatat di luar lingkup dan NFR-08 menyebut berbasis web, sehingga SRS perlu direvisi jika usulan ini disetujui.
+
+**Latar belakang:** aplikasi web tidak bisa membaca lokasi di latar belakang, sehingga FR-10 dipenuhi lewat absen selesai. Kelemahannya, siswa yang pergi sebentar di antara absen masuk dan absen selesai tidak terdeteksi. Aplikasi native bisa memakai **geofencing dari sistem operasi** (Android Geofencing API): HP sendiri yang memberi tahu aplikasi saat siswa keluar atau masuk radius sekolah, tanpa mengirim lokasi tiap menit, sehingga hemat baterai.
+
+**Sprint Goal:** siswa memakai aplikasi Android untuk absen, dan sistem mencatat jika siswa keluar area sekolah selama jam pelajaran. Orang tua menerima notifikasi kehadiran anak.
+
+**Keputusan yang diusulkan**
+- **Hanya untuk Siswa dan Orang Tua.** Guru dan Admin/TU tetap memakai web, karena tidak membutuhkan fitur native.
+- **Capacitor** untuk membungkus aplikasi web yang sudah ada. UI, backend, dan validasi dipakai ulang. Tidak memakai React Native/Flutter agar UI tidak dibangun dua kali.
+- **Android saja (APK).** iOS butuh Mac dan akun Apple Developer berbayar.
+- **Absen selesai tetap dipertahankan.** Geofencing menjadi tambahan. Siswa yang menolak izin lokasi latar belakang, atau memakai web, tetap mengikuti alur sekarang.
+- Pemantauan lokasi hanya aktif **selama ada pelajaran yang sedang diikuti** (setelah absen masuk sampai absen selesai atau pelajaran berakhir), tidak di luar jam sekolah.
+
+| ID | Tugas | Kebutuhan | Prioritas | PIC | Status |
+|---|---|---|---|---|---|
+| S4-01 | Spike: uji plugin geofencing Capacitor di HP Android nyata (keluar/masuk radius saat layar terkunci, perilaku penghemat baterai) | FR-10 | M | | [ ] |
+| S4-02 | Setup project Capacitor (Android), memuat aplikasi yang sudah di-deploy lewat HTTPS | NFR-08 | M | | [ ] |
+| S4-03 | Login di aplikasi dan token perangkat untuk request dari latar belakang (cookie WebView tidak terkirim dari proses native) | FR-01, NFR-02 | M | | [ ] |
+| S4-04 | Scan QR dengan kamera native dan GPS native untuk absen masuk dan absen selesai | FR-05, FR-09 | M | | [ ] |
+| S4-05 | Alur izin lokasi: penjelasan ke siswa, izin "Selalu", dan tetap berjalan jika ditolak | FR-10 | M | | [ ] |
+| S4-06 | Daftarkan geofence saat absen masuk, hapus saat absen selesai atau pelajaran berakhir | FR-10 | M | | [ ] |
+| S4-07 | Endpoint server untuk event keluar/masuk area, divalidasi terhadap sesi aktif dan waktu server | FR-10, NFR-03 | M | | [ ] |
+| S4-08 | Tanda "Keluar area" (beserta durasi) di daftar hadir guru, dashboard, laporan, Excel, dan halaman orang tua | FR-10, FR-13, FR-16 | M | | [ ] |
+| S4-09 | Notifikasi push untuk orang tua: anak hadir, terlambat, keluar area, tidak absen selesai | FR-14 | S | | [ ] |
+| S4-10 | Pengingat absen selesai untuk siswa (notifikasi lokal saat jendela dibuka) | FR-09 | S | | [ ] |
+| S4-11 | Retensi data lokasi: hapus koordinat lama secara berkala, status kehadiran tetap disimpan | NFR-07 | M | | [ ] |
+| S4-12 | Build APK bertanda tangan dan panduan instalasi untuk siswa dan orang tua | | M | | [ ] |
+| S4-13 | Uji di beberapa HP Android (termasuk merek dengan penghemat baterai agresif: Xiaomi, Oppo, Vivo) | EI-02, EI-03 | M | | [ ] |
+
+**Definition of Done Sprint 4:** APK terpasang di HP siswa, absen masuk dan absen selesai berjalan dari aplikasi, keluar area saat layar terkunci tercatat di server dan tampil di daftar hadir guru, dan siswa yang memakai web tetap bisa absen seperti sebelumnya.
+
+**Hasil spike S4-01 menentukan kelanjutan:** jika geofencing tidak andal di HP uji (terlambat lebih dari beberapa menit atau mati karena penghemat baterai), S4-06 sampai S4-08 dibatalkan dan aplikasi cukup memberi kamera/GPS native, pengingat, dan notifikasi push.
+
 ## 5. Aturan Kerja Tim
 
 **Git**
@@ -176,6 +212,8 @@ Mengacu pada SRS bagian 3.5, ditambah risiko pelaksanaan proyek.
 | Kamera/GPS diblokir tanpa HTTPS | Fitur inti tidak jalan | Wajib HTTPS saat uji dan deploy, tunnel HTTPS untuk development |
 | Perubahan schema bentrok antar anggota | Migrasi gagal, waktu terbuang | Satu orang memegang schema di awal, perubahan lewat PR dan diumumkan |
 | Jadwal sempit (enam pertemuan) | Fitur tidak selesai | Prioritas Must lebih dulu, item Could dibuang tanpa ragu |
+| Geofencing tidak andal di HP tertentu (Sprint 4) | Keluar area tidak tercatat atau tercatat terlambat | Spike S4-01 di awal sprint, absen selesai tetap berlaku sebagai cadangan |
+| Siswa menolak izin lokasi latar belakang (Sprint 4) | Pemantauan tidak berjalan | Penjelasan yang jelas saat meminta izin, alur absen selesai tetap berlaku |
 | Data siswa di bawah umur | Isu privasi | Batasi pelacakan ke jam sekolah, simpan data seminimal mungkin, retensi data lokasi |
 
 ## 8. Pemetaan Kebutuhan ke Sprint
@@ -207,3 +245,12 @@ Variabel environment di produksi diisi lewat pengaturan hosting, dengan `AUTH_SE
 - [x] Batas akurasi GPS: 50 m (`MAX_GPS_ACCURACY_M`).
 - [x] Check-out (absen selesai): scan QR yang sama dengan validasi lokasi, mulai 2/3 pelajaran sampai 10 menit setelah pelajaran berakhir. Absen masuk ditutup saat pelajaran berakhir.
 - [ ] Revisi SRS untuk tambahan struktur database.
+
+**Untuk Sprint 4 (usulan aplikasi mobile)**
+- [ ] Persetujuan tim dan dosen untuk menambah aplikasi mobile (mengubah lingkup dan NFR-08).
+- [ ] Akibat keluar area: hanya ditandai sebagai keterangan, atau mengubah status kehadiran?
+- [ ] Berapa lama di luar area baru dicatat (misalnya lebih dari 5 menit), untuk menghindari tanda palsu akibat GPS meleset di tepi radius.
+- [ ] Apakah izin lokasi latar belakang wajib bagi siswa, atau sukarela.
+- [ ] Lama penyimpanan data lokasi (retensi), misalnya 30 hari.
+- [ ] Layanan notifikasi push (misalnya Firebase Cloud Messaging).
+- [ ] Hosting sudah ditetapkan dan aplikasi web sudah di-deploy (T-04), karena aplikasi mobile memuat versi yang di-deploy.
