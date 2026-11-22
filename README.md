@@ -198,6 +198,18 @@ Yang terjadi saat tes dijalankan:
 
 Jalankan `npm run test:e2e` sebelum membuat Pull Request. Saat menambah fitur baru, tambahkan juga tesnya di folder `e2e/`.
 
+### Panduan pengujian lengkap
+
+Untuk pengujian lengkap, termasuk langkah uji manual per skenario, data uji, hasil yang diharapkan, dan status lulus, buka panduan di folder [`docs/`](docs/):
+
+| Dokumen | Cakupan |
+|---|---|
+| [`docs/testing-sprint-1.md`](docs/testing-sprint-1.md) | Akun, login, hak akses, dan data master |
+| [`docs/testing-sprint-2.md`](docs/testing-sprint-2.md) | Absensi QR Code dan GPS, status Hadir/Terlambat, check-out, izin/sakit, dan riwayat |
+| [`docs/testing-sprint-3.md`](docs/testing-sprint-3.md) | Dashboard real-time, rekap dan ekspor Excel, halaman orang tua, absen selesai pelajaran, PWA, dan backup |
+
+Sebaiknya uji manual dilakukan oleh anggota selain pembuat fitur. Uji manual juga penting untuk menilai tampilan dan kenyamanan pemakaian di HP sungguhan, karena hal itu tidak bisa dinilai oleh tes otomatis.
+
 ## Backup dan Pemeliharaan
 
 **Backup database** (NFR-04):
